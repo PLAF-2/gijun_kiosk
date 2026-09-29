@@ -406,6 +406,7 @@ git commit -m "feat: add selected cinema posters and CGV-style prices"
 
 **Files:**
 - Create: `src/lib/cinema/booking-store.ts`
+- Test: `src/lib/cinema/booking-store.test.ts`
 
 - [ ] **Step 1: Define the storage key and empty store**
 
