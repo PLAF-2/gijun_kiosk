@@ -760,6 +760,7 @@ export const metadata: Metadata = {
 **Files:**
 - Create: `src/components/cinema/showtime-screen.tsx`
 - Create: `src/components/cinema/seat-screen.tsx`
+- Test: `src/components/cinema/showtime-seat-screen.test.tsx`
 - Modify: `src/components/cinema/kiosk-app.tsx`
 
 - [ ] **Step 1: Render the seven local demo dates and showtimes**
@@ -808,6 +809,8 @@ export function ShowtimeScreen(props: ShowtimeScreenProps) {
   );
 }
 ```
+
+When a screening has no available seats, label it `매진` and disable its button. Give each labeled date, showtime, audience, seat-legend, and seat-map group a semantic `role="group"`.
 
 - [ ] **Step 2: Reset downstream selections when screening changes**
 

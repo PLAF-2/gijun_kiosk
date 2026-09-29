@@ -3,19 +3,78 @@
 import React, { useEffect, useState } from "react";
 import { KioskHeader } from "@/components/cinema/kiosk-header";
 import { MovieScreen } from "@/components/cinema/movie-screen";
+import { SeatScreen } from "@/components/cinema/seat-screen";
+import { ShowtimeScreen } from "@/components/cinema/showtime-screen";
 import { StartScreen } from "@/components/cinema/start-screen";
+import { canContinueWithSeats, getOccupiedSeatIds } from "@/lib/cinema/booking";
+import { getDemoDates, getScreenings, movies } from "@/lib/cinema/catalog";
 import { readBookingStore, writeBookingStore } from "@/lib/cinema/booking-store";
-import { getDemoDates, movies, toLocalDateKey } from "@/lib/cinema/catalog";
 import type { BookingStep, BookingStore } from "@/lib/cinema/types";
 
 const emptyStore: BookingStore = { version: 1, reservations: [] };
+
+export type BookingSelectionState = {
+  selectedDate: string | null;
+  selectedScreeningId: string | null;
+  selectedSeatIds: string[];
+  audienceCount: number;
+};
+
+type BookingSelectionAction =
+  | { type: "date"; date: string }
+  | { type: "screening"; screeningId: string }
+  | { type: "audience-count"; count: number }
+  | { type: "toggle-seat"; seatId: string; occupied: boolean };
+
+export function createInitialBookingSelection(date: string | null = null): BookingSelectionState {
+  return {
+    selectedDate: date,
+    selectedScreeningId: null,
+    selectedSeatIds: [],
+    audienceCount: 1,
+  };
+}
+
+export function updateBookingSelection(
+  state: BookingSelectionState,
+  action: BookingSelectionAction,
+): BookingSelectionState {
+  switch (action.type) {
+    case "date":
+      return state.selectedDate === action.date
+        ? state
+        : { ...state, selectedDate: action.date, selectedScreeningId: null, selectedSeatIds: [] };
+    case "screening":
+      return state.selectedScreeningId === action.screeningId
+        ? state
+        : { ...state, selectedScreeningId: action.screeningId, selectedSeatIds: [] };
+    case "audience-count": {
+      const requestedCount = Number.isFinite(action.count)
+        ? Math.trunc(action.count)
+        : state.audienceCount;
+      const audienceCount = Math.max(1, Math.min(8, requestedCount));
+      return {
+        ...state,
+        audienceCount,
+        selectedSeatIds: state.selectedSeatIds.slice(0, audienceCount),
+      };
+    }
+    case "toggle-seat":
+      if (action.occupied) return state;
+      if (state.selectedSeatIds.includes(action.seatId)) {
+        return { ...state, selectedSeatIds: state.selectedSeatIds.filter((id) => id !== action.seatId) };
+      }
+      if (state.selectedSeatIds.length >= state.audienceCount) return state;
+      return { ...state, selectedSeatIds: [...state.selectedSeatIds, action.seatId] };
+  }
+}
 
 export function CinemaKioskApp() {
   const [step, setStep] = useState<BookingStep>("home");
   const [store, setStore] = useState<BookingStore>(emptyStore);
   const [storeLoaded, setStoreLoaded] = useState(false);
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selection, setSelection] = useState<BookingSelectionState>(() => createInitialBookingSelection());
 
   useEffect(() => {
     setStore(readBookingStore());
@@ -27,28 +86,61 @@ export function CinemaKioskApp() {
   }, [store, storeLoaded]);
 
   const selectedMovie = movies.find((movie) => movie.id === selectedMovieId);
+  const dates = getDemoDates(new Date()).map(({ key, date }) => ({
+    key,
+    label: date.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" }),
+  }));
+  const screenings = selectedMovie && selection.selectedDate
+    ? getScreenings(selectedMovie.id, selection.selectedDate)
+    : [];
+  const selectedScreening = screenings.find((screening) => screening.id === selection.selectedScreeningId);
 
   function handleStartBooking() {
     setSelectedMovieId(null);
-    setSelectedDate(null);
+    setSelection(createInitialBookingSelection());
     setStep("movie");
   }
 
   function handleSelectMovie(movieId: string) {
     setSelectedMovieId(movieId);
-    setSelectedDate(null);
+    setSelection(createInitialBookingSelection());
   }
 
   function handleContinueFromMovies() {
     if (!selectedMovie) return;
-    setSelectedDate(toLocalDateKey(getDemoDates(new Date())[0].date));
+    setSelection(createInitialBookingSelection(dates[0]?.key ?? null));
     setStep("showtime");
+  }
+
+  function handleSelectDate(date: string) {
+    setSelection((current) => updateBookingSelection(current, { type: "date", date }));
+  }
+
+  function handleSelectScreening(screeningId: string) {
+    setSelection((current) => updateBookingSelection(current, { type: "screening", screeningId }));
+    setStep("seats");
+  }
+
+  function handleAudienceCountChange(count: number) {
+    setSelection((current) => updateBookingSelection(current, { type: "audience-count", count }));
+  }
+
+  function handleToggleSeat(seatId: string) {
+    if (!selectedScreening) return;
+    const occupied = getOccupiedSeatIds(selectedScreening, store.reservations).has(seatId);
+    setSelection((current) => updateBookingSelection(current, { type: "toggle-seat", seatId, occupied }));
+  }
+
+  function handleContinueFromSeats() {
+    if (!selectedScreening || !canContinueWithSeats(selection.audienceCount, selection.selectedSeatIds)) return;
+    setStep("review");
   }
 
   function handleBack() {
     const previousStep: Partial<Record<BookingStep, BookingStep>> = {
       movie: "home",
       showtime: "movie",
+      seats: "showtime",
       lookup: "home",
     };
     setStep(previousStep[step] ?? "home");
@@ -106,16 +198,31 @@ export function CinemaKioskApp() {
       );
       break;
     case "showtime":
-      screen = (
-        <section className="screen-card">
-          <div className="screen-heading">
-            <p className="eyebrow">{selectedMovie?.title ?? "영화 예매"}</p>
-            <h1>상영 시간 선택</h1>
-          </div>
-          <p>상영 시간과 좌석 화면을 준비하고 있어요.</p>
-          {selectedDate ? <p>관람 날짜: {selectedDate}</p> : null}
-        </section>
-      );
+      screen = selectedMovie && selection.selectedDate ? (
+        <ShowtimeScreen
+          dates={dates}
+          movie={selectedMovie}
+          onSelectDate={handleSelectDate}
+          onSelectScreening={handleSelectScreening}
+          reservations={store.reservations}
+          screenings={screenings}
+          selectedDate={selection.selectedDate}
+          selectedScreeningId={selection.selectedScreeningId}
+        />
+      ) : null;
+      break;
+    case "seats":
+      screen = selectedScreening ? (
+        <SeatScreen
+          audienceCount={selection.audienceCount}
+          onAudienceCountChange={handleAudienceCountChange}
+          onContinue={handleContinueFromSeats}
+          onToggleSeat={handleToggleSeat}
+          reservations={store.reservations}
+          screening={selectedScreening}
+          selectedSeatIds={selection.selectedSeatIds}
+        />
+      ) : null;
       break;
     case "lookup":
       screen = (
