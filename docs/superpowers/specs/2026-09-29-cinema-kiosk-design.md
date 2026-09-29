@@ -2,7 +2,7 @@
 
 ## Summary
 
-Replace the current Yakitei food-ordering demo experience with a Korean-language cinema ticket reservation kiosk demo. Keep the existing Next.js project shell, but rebuild the customer-facing flow and its application logic for movie booking. The first version uses sample movies and screenings, a selectable seat map, simulated payment, booking lookup, and cancellation.
+Replace the current Yakitei food-ordering demo experience with a Korean-language cinema ticket reservation kiosk demo. Keep the existing Next.js project shell, but rebuild the customer-facing flow and its application logic for movie booking. The first version uses the ten movies and poster images supplied by the user, demo screenings and seat maps, simulated payment, booking lookup, and cancellation.
 
 ## Product Goals
 
@@ -15,8 +15,9 @@ Replace the current Yakitei food-ordering demo experience with a Korean-language
 ## In Scope
 
 - Korean-language kiosk experience optimized for a 16:9 landscape display.
-- Sample movie list with poster artwork, title, rating, runtime, and brief description.
+- The ten user-selected movies with local poster artwork, title, rating, runtime, and brief description.
 - Sample screening dates and showtimes.
+- CGV-style adult general 2D sample prices by weekday and weekend.
 - Audience count selection.
 - Seat map with available, selected, and unavailable seat states.
 - Booking summary and simulated payment completion.
@@ -34,10 +35,29 @@ Replace the current Yakitei food-ordering demo experience with a Korean-language
 - Concession ordering, staff tools, ticket printer integration, or multi-theater administration.
 - Replicating any specific cinema operator's cancellation policy.
 
+## Movie Catalog and Price Policy
+
+Use the ten user-supplied posters as the movie catalog, in this order:
+
+| Movie | Rating | Runtime | Local poster |
+| --- | --- | ---: | --- |
+| 극장판 치이카와: 인어 섬의 비밀 | 전체 | 99분 | `/posters/chiikawa.jpg` |
+| 나 홀로 집에 | 전체 | 103분 | `/posters/home-alone.jpg` |
+| 라라랜드 | 12세 | 128분 | `/posters/la-la-land.jpg` |
+| 만약에 우리 | 15세 | 115분 | `/posters/if-we-were-us.jpg` |
+| 모아나 (실사판) | 전체 | 115분 | `/posters/moana.jpg` |
+| 오디세이 | 15세 | 172분 | `/posters/the-odyssey.jpg` |
+| 오늘 밤, 세계에서 이 사랑이 사라진다 해도 | 12세 | 121분 | `/posters/even-if-this-love-disappears-tonight.jpg` |
+| 마루 밑 아리에티 | 전체 | 94분 | `/posters/arrietty.jpg` |
+| 비긴 어게인 | 15세 | 104분 | `/posters/begin-again.jpg` |
+| 쥬라기 월드: 새로운 시작 | 12세 | 133분 | `/posters/jurassic-world-rebirth.jpg` |
+
+These are static demo catalog entries. Keep each image local and render the poster title as alt text. Use standard adult 2D sample prices of 14,000원 Monday through Thursday and 15,000원 Friday through Sunday. The demo showtimes all start after 10:00. CGV price and time bands vary by location, so show a short note that the values are a general 2D example and are not a live CGV quote. Do not add dynamic theater pricing, discounts, or special-format prices.
+
 ## Primary Booking Flow
 
 1. The home screen offers `예매 시작` and `예매 조회·취소`.
-2. The customer chooses a movie from poster-led cards.
+2. The customer chooses a movie from poster-led cards showing one of the ten selected films.
 3. The customer selects a screening date and showtime.
 4. The customer selects the audience count.
 5. The customer selects the same number of seats from the seat map. Occupied seats are disabled and visibly distinct.
@@ -114,6 +134,7 @@ The demo does not collect personal details. A reservation number is sufficient t
 - Keep the existing Next.js App Router shell and replace the current restaurant-oriented entry experience with the cinema kiosk.
 - Organize the booking flow as focused screens under `src/components/cinema` and a central `KioskApp` that owns step transitions and in-progress selection state.
 - Store sample movies, screenings, seat layouts, and base ticket prices in focused modules under `src/lib/cinema`.
+- Store the ten supplied poster images under `public/posters`; calculate the demo ticket price from the screening date's weekday/weekend band.
 - Keep booking operations in pure helpers: price calculation, seat validation, booking creation, lookup, and cancellation.
 - Store demo reservations in a versioned `localStorage` key. Persist reservation number, screening, audience count, seats, total, and booking status.
 - When a booking completes, mark its selected seats unavailable for that screening. When cancelled, mark it cancelled and make those seats available again.
@@ -133,6 +154,7 @@ The demo does not collect personal details. A reservation number is sufficient t
 ## Verification Plan
 
 - Check helper behavior for seat-count validation, total calculation, booking creation, lookup, and cancellation seat release.
+- Check weekday and weekend ticket prices and verify all ten local poster paths resolve.
 - Walk through the full booking flow, including changing a screening and confirming that previous seat selections are cleared.
 - Walk through immediate cancellation and lookup-based cancellation, including unknown and already-cancelled booking numbers.
 - Confirm local persistence survives a page reload in the same browser and that the interface remains usable at kiosk landscape and narrow viewport sizes.

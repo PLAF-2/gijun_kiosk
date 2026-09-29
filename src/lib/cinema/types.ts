@@ -4,6 +4,7 @@ export type Movie = {
   ageRating: "전체" | "12세" | "15세";
   runtimeMinutes: number;
   description: string;
+  posterSrc: string;
   posterTheme: "violet" | "teal" | "amber" | "blue";
 };
 

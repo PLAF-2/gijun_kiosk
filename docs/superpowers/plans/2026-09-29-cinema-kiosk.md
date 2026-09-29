@@ -14,10 +14,11 @@
 
 ### Create
 
-- `src/lib/cinema/types.ts` — movie, screening, seat, reservation, and booking-step types.
-- `src/lib/cinema/catalog.ts` — fictional demo movies, local poster themes, date generation, screening generation, and seat layout.
+- `src/lib/cinema/types.ts` — movie, local poster path, screening, seat, reservation, and booking-step types.
+- `src/lib/cinema/catalog.ts` — user-selected movie metadata, local poster paths, date generation, CGV-style sample ticket pricing, screening generation, and seat layout.
 - `src/lib/cinema/booking.ts` — ticket total, occupied-seat calculation, reservation creation, lookup, and cancellation helpers.
 - `src/lib/cinema/booking.test.ts` — booking price, seat-count validation, occupancy, and cancellation seat-release checks.
+- `public/posters/` — ten optimized local movie poster images supplied by the user.
 - `src/lib/cinema/booking-store.ts` — safe versioned `localStorage` read/write operations.
 - `src/components/cinema/kiosk-app.tsx` — client state machine and callbacks for booking and cancellation.
 - `src/components/cinema/kiosk-header.tsx` — brand, progress indicator, and navigation controls.
@@ -351,6 +352,56 @@ git commit -m "feat: add cinema booking rules"
 
 All screens call `KioskApp` callbacks. They do not modify reservation arrays or seat occupancy directly.
 
+### User-approved scope update: selected films, posters, and CGV-style demo prices
+
+After the original four placeholder films were added, the user supplied ten poster images and requested these titles for the kiosk. This update supersedes the four fictional placeholders in Task 1. Use these entries and keep their display order:
+
+| ID | Korean title | Rating | Runtime | Poster path |
+| --- | --- | --- | ---: | --- |
+| `chiikawa-mermaid-island` | 극장판 치이카와: 인어 섬의 비밀 | 전체 | 99분 | `/posters/chiikawa.jpg` |
+| `home-alone` | 나 홀로 집에 | 전체 | 103분 | `/posters/home-alone.jpg` |
+| `la-la-land` | 라라랜드 | 12세 | 128분 | `/posters/la-la-land.jpg` |
+| `manyak-e-woori` | 만약에 우리 | 15세 | 115분 | `/posters/if-we-were-us.jpg` |
+| `moana-2026` | 모아나 | 전체 | 115분 | `/posters/moana.jpg` |
+| `the-odyssey` | 오디세이 | 15세 | 172분 | `/posters/the-odyssey.jpg` |
+| `oneul-bam-segyeeseo` | 오늘 밤, 세계에서 이 사랑이 사라진다 해도 | 12세 | 121분 | `/posters/even-if-this-love-disappears-tonight.jpg` |
+| `arrietty` | 마루 밑 아리에티 | 전체 | 94분 | `/posters/arrietty.jpg` |
+| `begin-again` | 비긴 어게인 | 15세 | 104분 | `/posters/begin-again.jpg` |
+| `jurassic-world-rebirth` | 쥬라기 월드: 새로운 시작 | 12세 | 133분 | `/posters/jurassic-world-rebirth.jpg` |
+
+The user also delegated showtimes and seats, so keep the four demo showtimes (10:20, 13:10, 16:00, 19:15) and 4x8 seats. Use standard adult 2D example prices: 14,000원 Monday–Thursday and 15,000원 Friday–Sunday. All showtimes begin after 10:00. Since CGV states that ticket rates and time bands can vary by theater, label the UI price as a general 2D example and do not imply live CGV integration. Do not add runtime movie editing or poster upload screens; these user-supplied entries form the seeded catalog.
+
+### Task 2A: Replace placeholders with the user-supplied movie catalog and pricing
+
+**Files:**
+- Modify: `src/lib/cinema/types.ts`
+- Modify: `src/lib/cinema/catalog.ts`
+- Modify: `src/lib/cinema/catalog.test.ts`
+- Use: ten image files under `public/posters/` from the update above
+
+- [ ] **Step 1: Extend Movie and replace the sample movies**
+
+Add `posterSrc: string` to `Movie`. Replace the four fictional placeholder movies with the ten user-selected entries and exact titles, age ratings, runtimes, and poster paths listed in the scope update. Use short Korean descriptions that identify each movie without repeating poster text. The local posters must be available without network access.
+
+- [ ] **Step 2: Add weekday and weekend 2D demo prices**
+
+Generate a ticket price from the local calendar date key: 14,000원 Monday–Thursday and 15,000원 Friday–Sunday. Do not parse the date through UTC. Keep the screening times at 10:20, 13:10, 16:00, and 19:15 and the existing deterministic 4x8 seat maps.
+
+- [ ] **Step 3: Write/extend catalog tests before changing behavior**
+
+Verify the exact ten movie IDs/titles/poster paths and required ratings/runtimes, a weekday price of 14,000원, a Saturday or Sunday price of 15,000원, and the existing local date, stable screening, seat-map, and blocked-seat behavior. Run the focused catalog tests red before implementation and green afterward.
+
+- [ ] **Step 4: Check every poster asset**
+
+Confirm that each `posterSrc` points to an existing local file in `public/posters`. Keep descriptions and poster metadata in the catalog; do not add file upload/storage behavior.
+
+- [ ] **Step 5: Commit the selected movie catalog**
+
+```bash
+git add src/lib/cinema/types.ts src/lib/cinema/catalog.ts src/lib/cinema/catalog.test.ts public/posters
+git commit -m "feat: add selected cinema posters and CGV-style prices"
+```
+
 ### Task 3: Add safe local booking persistence
 
 **Files:**
@@ -507,7 +558,7 @@ export function StartScreen({ onStartBooking, onLookupBooking }: StartScreenProp
 
 - [ ] **Step 3: Add poster-led movie cards**
 
-Render the local `posterTheme` value as a CSS class. Each movie card shows title, age rating, runtime, description, and a selected state:
+Render each movie's local `posterSrc` image and keep the title, age rating, runtime, and description as HTML text. Use an empty alt value for the image because the same button contains its movie title. Each card has a clear selected state:
 
 ```tsx
 import type { Movie } from "@/lib/cinema/types";
@@ -532,9 +583,7 @@ export function MovieScreen({ movies, selectedMovieId, onSelect, onContinue }: M
             onClick={() => onSelect(movie.id)}
             type="button"
           >
-            <span aria-hidden="true" className={`movie-poster poster-${movie.posterTheme}`}>
-              <span>{movie.title}</span>
-            </span>
+            <img alt="" className={`movie-poster poster-${movie.posterTheme}`} src={movie.posterSrc} />
             <span className="movie-meta"><strong>{movie.title}</strong><span>{movie.ageRating} · {movie.runtimeMinutes}분</span><span>{movie.description}</span></span>
           </button>
         ))}
@@ -745,10 +794,12 @@ export function ShowtimeScreen(props: ShowtimeScreenProps) {
             <button aria-pressed={screening.id === props.selectedScreeningId} key={screening.id} onClick={() => props.onSelectScreening(screening.id)} type="button">
               <strong>{screening.startTime}</strong><span>{screening.auditorium}</span>
               <span>잔여 좌석 {screening.seats.length - occupied.size}석</span>
+              <span>{screening.ticketPrice.toLocaleString("ko-KR")}원 / 1인</span>
             </button>
           );
         })}
       </div>
+      <p className="pricing-note">CGV 일반 2D 성인 기준 예시 요금이며, 실제 금액은 지점에 따라 다를 수 있습니다.</p>
     </section>
   );
 }
@@ -774,7 +825,7 @@ function handleSelectScreening(screeningId: string) {
 
 - [ ] **Step 3: Add audience count and seat-map interactions**
 
-Use `getOccupiedSeatIds(screening, store.reservations)` to disable seeded and booked seats. Remove a selected seat when tapped again; refuse new seats once the audience count is reached. Expose the interaction through explicit props:
+Use `getOccupiedSeatIds(screening, store.reservations)` to disable seeded and booked seats. Remove a selected seat when tapped again; refuse new seats once the audience count is reached. Show the ticket total based on `screening.ticketPrice`, and include the CGV general adult 2D example-price note on the showtime/seat flow. Expose the interaction through explicit props:
 
 ```tsx
 import { canContinueWithSeats, getOccupiedSeatIds } from "@/lib/cinema/booking";
@@ -1154,6 +1205,7 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .booking-summary dt { color: var(--cinema-muted); }
 .booking-summary dd { margin: 0; text-align: right; }
 .seat-legend { display: flex; justify-content: center; gap: 18px; color: var(--cinema-muted); }
+.pricing-note { color: var(--cinema-muted); font-size: 14px; }
 
 .cinema-shell {
   width: min(1680px, calc(100% - 48px));
@@ -1169,19 +1221,15 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 }
 ```
 
-- [ ] **Step 2: Give poster themes distinct locally rendered artwork**
+- [ ] **Step 2: Display the supplied local poster images**
 
-Add the four locally rendered poster treatments and visible seat states. Keep the movie title and rating as actual HTML text over the background so cards remain readable without remote images:
+Display the supplied local JPEG posters with a consistent portrait crop, plus visible seat states. The ten movie cards should fit a 16:9 kiosk view without making posters too small; allow vertical scrolling at narrower sizes. Keep the title and rating as actual HTML text for accessibility and reliable rendering:
 
 ```css
-.movie-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.movie-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
 .movie-card { display: grid; gap: 14px; padding: 12px; text-align: left; color: var(--cinema-ink); background: var(--cinema-panel); border: 2px solid var(--cinema-line); border-radius: 20px; }
 .movie-card.is-selected { border-color: var(--cinema-accent); box-shadow: 0 0 0 3px rgb(139 124 255 / 22%); }
-.movie-poster { display: grid; align-items: end; min-height: 300px; padding: 18px; border-radius: 14px; font-size: 28px; font-weight: 800; }
-.poster-violet { background: radial-gradient(circle at 70% 25%, #f0c7ff, transparent 22%), linear-gradient(145deg, #39235f, #110e27 74%); }
-.poster-teal { background: radial-gradient(circle at 24% 35%, #c4fff0, transparent 18%), linear-gradient(145deg, #116f75, #0c1c2d 76%); }
-.poster-amber { background: radial-gradient(circle at 70% 30%, #ffe8a3, transparent 18%), linear-gradient(145deg, #a65b25, #321823 76%); }
-.poster-blue { background: radial-gradient(circle at 48% 25%, #d8e7ff, transparent 20%), linear-gradient(145deg, #2f5593, #101a33 76%); }
+.movie-poster { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 14px; background: var(--cinema-panel-raised); }
 .seat-map { display: grid; gap: 12px; width: fit-content; margin: 24px auto; }
 .seat-row { display: flex; align-items: center; gap: 10px; }
 .seat { width: 56px; min-height: 56px; border: 0; border-radius: 12px 12px 7px 7px; color: var(--cinema-ink); }
@@ -1190,12 +1238,14 @@ Add the four locally rendered poster treatments and visible seat states. Keep th
 .seat-taken { background: var(--cinema-seat-taken); color: #fff; cursor: not-allowed; }
 .seat:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
-@media (max-width: 1100px) {
-  .movie-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .movie-poster { min-height: 220px; }
+@media (max-width: 1400px) {
+  .movie-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 1050px) {
+  .movie-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
-  .movie-grid { grid-template-columns: 1fr; }
+  .movie-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .seat-row { gap: 5px; }
   .seat { width: 40px; min-height: 56px; }
 }
@@ -1212,12 +1262,12 @@ Set the package name to `cinema-reservation-kiosk` and replace the old test path
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "test": "node --import tsx --test src/lib/cinema/booking.test.ts"
+    "test": "node --import tsx --test src/lib/cinema/catalog.test.ts src/lib/cinema/booking.test.ts src/lib/cinema/booking-store.test.ts"
   }
 }
 ```
 
-Rewrite the README to describe the cinema demo, fictional sample movies and showtimes, browser-local reservation storage, both cancellation paths, and `npm run dev`, `npm test`, and `npm run build` commands.
+Rewrite the README to describe the cinema demo, the ten user-selected movies and local posters, sample showtimes and CGV-style example prices, browser-local reservation storage, both cancellation paths, and `npm run dev`, `npm test`, and `npm run build` commands.
 
 - [ ] **Step 4: Remove obsolete restaurant components and assets**
 

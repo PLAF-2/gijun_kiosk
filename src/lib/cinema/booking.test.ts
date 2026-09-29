@@ -23,7 +23,7 @@ const baselineBooking: Reservation = {
   auditorium: screening.auditorium,
   audienceCount: 2,
   seatIds: ["A3", "A4"],
-  total: 24000,
+  total: 28000,
   status: "booked",
   createdAt: "2026-09-29T00:00:00.000Z",
 };
@@ -59,7 +59,8 @@ test("createReservation captures screening details and makes a unique six-digit 
   assert.equal(created.movieId, movie.id);
   assert.equal(created.screeningId, movieScreening.id);
   assert.deepEqual(created.seatIds, ["A3"]);
-  assert.equal(created.total, 12000);
+  assert.equal(movieScreening.ticketPrice, 14000);
+  assert.equal(created.total, movieScreening.ticketPrice);
   assert.equal(created.status, "booked");
   assert.equal(created.createdAt, "2026-09-29T00:00:00.000Z");
 });
