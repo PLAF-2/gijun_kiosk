@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "야키테이 키오스크",
-  description: "야키테이 야끼소바 가게를 위한 시연용 주문 키오스크",
+  title: "영화관 키오스크",
+  description: "영화와 좌석을 선택하고 예매를 관리하는 시연용 키오스크",
 };
 
 export default function RootLayout({

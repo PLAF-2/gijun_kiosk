@@ -493,11 +493,14 @@ git commit -m "feat: persist cinema demo bookings locally"
 
 ### Task 4: Add the cinema kiosk shell and home/movie steps
 
+This is an incremental checkpoint: implement the home and movie screens in this task. Do not import the showtime, seat, review, completion, or lookup screens from the later tasks before those files exist. Hydrate the booking store after mount. The showtime and lookup entry points may render temporary placeholders until Tasks 5–7 replace them with working flows.
+
 **Files:**
 - Create: `src/components/cinema/kiosk-header.tsx`
 - Create: `src/components/cinema/start-screen.tsx`
 - Create: `src/components/cinema/movie-screen.tsx`
 - Create: `src/components/cinema/kiosk-app.tsx`
+- Test: `src/components/cinema/kiosk-app.test.tsx`
 - Modify: `src/app/page.tsx`
 - Modify: `src/app/layout.tsx`
 
