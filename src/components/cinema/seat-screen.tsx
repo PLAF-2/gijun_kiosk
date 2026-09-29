@@ -7,6 +7,7 @@ type SeatScreenProps = {
   reservations: Reservation[];
   audienceCount: number;
   selectedSeatIds: string[];
+  bookingError?: string | null;
   onAudienceCountChange: (count: number) => void;
   onToggleSeat: (seatId: string) => void;
   onContinue: () => void;
@@ -71,6 +72,7 @@ export function SeatScreen(props: SeatScreenProps) {
       </div>
       <p>{props.selectedSeatIds.length} / {props.audienceCount}석 선택 · {total.toLocaleString("ko-KR")}원</p>
       <p className="pricing-note">CGV 일반 2D 성인 기준 예시 요금이며, 실제 금액은 지점에 따라 다를 수 있습니다.</p>
+      {props.bookingError ? <p role="alert">{props.bookingError}</p> : null}
       <div className="screen-actions">
         <button className="primary-button" disabled={!canContinue} onClick={props.onContinue} type="button">예매 내용 확인</button>
       </div>

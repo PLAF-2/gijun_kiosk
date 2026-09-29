@@ -930,6 +930,7 @@ git commit -m "feat: add cinema movie and seat selection"
 **Files:**
 - Create: `src/components/cinema/booking-review-screen.tsx`
 - Create: `src/components/cinema/complete-screen.tsx`
+- Test: `src/components/cinema/booking-completion.test.tsx`
 - Modify: `src/components/cinema/kiosk-app.tsx`
 
 - [ ] **Step 1: Render the booking review**
