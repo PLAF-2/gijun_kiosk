@@ -20,9 +20,10 @@ export function KioskHeader({
       <div className="cinema-brand">
         CINEMA <span>RESERVATION</span>
       </div>
-      <p aria-live="polite">
-        {stepNumber} / {stepCount} · {stepLabel}
-      </p>
+      <div className="header-progress">
+        <p aria-live="polite">{stepNumber > 0 ? `${stepNumber} / ${stepCount} · ` : ""}{stepLabel}</p>
+        {stepNumber > 0 ? <div className="progress-track" aria-hidden="true"><span style={{ width: `${stepNumber / stepCount * 100}%` }} /></div> : null}
+      </div>
       <nav aria-label="키오스크 이동">
         {onBack ? (
           <button onClick={onBack} type="button">

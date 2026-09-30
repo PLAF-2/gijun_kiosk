@@ -17,23 +17,35 @@ test("start screen offers booking and lookup entry points", () => {
   assert.doesNotMatch(html, /야키테이/);
 });
 
-test("movie screen renders each local poster with accessible title and metadata", () => {
-  const html = renderToStaticMarkup(
-    <MovieScreen
-      movies={movies}
-      selectedMovieId={null}
-      onSelect={() => {}}
-      onContinue={() => {}}
-    />,
-  );
-
-  for (const movie of movies) {
-    assert.match(html, new RegExp(`src="${movie.posterSrc}"`));
-    assert.match(html, new RegExp(`>${movie.title}</strong>`));
-    assert.match(html, new RegExp(`${movie.ageRating} · ${movie.runtimeMinutes}분`));
+test("movie screen renders accessible local posters at root and GitHub Pages base paths", () => {
+  const originalBasePath = process.env.NEXT_PUBLIC_BASE_PATH;
+  try {
+    for (const basePath of ["", "/first-project"]) {
+      process.env.NEXT_PUBLIC_BASE_PATH = basePath;
+      const html = renderToStaticMarkup(
+        <MovieScreen
+          movies={movies}
+          selectedMovieId={null}
+          onSelect={() => {}}
+          onContinue={() => {}}
+        />,
+      );
+      for (const movie of movies) {
+        assert.ok(html.includes(`src="${basePath}${movie.posterSrc}"`));
+        assert.match(html, new RegExp(`>${movie.title}</strong>`));
+        assert.match(html, new RegExp(`${movie.ageRating} · ${movie.runtimeMinutes}분`));
+      }
+      assert.equal((html.match(/alt=""/g) ?? []).length, movies.length);
+      assert.equal((html.match(/class="movie-card/g) ?? []).length, movies.length);
+      const homeHtml = renderToStaticMarkup(<StartScreen onStartBooking={() => {}} onLookupBooking={() => {}} />);
+      for (const movie of [movies[5], movies[2], movies[7]]) {
+        assert.ok(homeHtml.includes(`src="${basePath}${movie.posterSrc}"`));
+      }
+    }
+  } finally {
+    if (originalBasePath === undefined) delete process.env.NEXT_PUBLIC_BASE_PATH;
+    else process.env.NEXT_PUBLIC_BASE_PATH = originalBasePath;
   }
-  assert.equal((html.match(/alt=""/g) ?? []).length, movies.length);
-  assert.equal((html.match(/class="movie-card/g) ?? []).length, movies.length);
 });
 
 test("movie selection is reflected with aria-pressed and gates continue", () => {

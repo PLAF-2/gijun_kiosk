@@ -23,11 +23,13 @@ export function SeatScreen(props: SeatScreenProps) {
   const total = computeBookingTotal(props.screening.ticketPrice, props.audienceCount);
 
   return (
-    <section className="screen-card">
+    <section className="screen-card seat-screen">
       <div className="screen-heading">
         <p className="eyebrow">{props.screening.date} · {props.screening.startTime} · {props.screening.auditorium}</p>
         <h1>인원과 좌석을 선택하세요</h1>
       </div>
+      <div className="audience-bar">
+      <div><strong>관람 인원</strong><p>성인 · 최대 8명</p></div>
       <div role="group" aria-label="관람 인원" className="audience-picker">
         <button
           aria-label="인원 줄이기"
@@ -43,10 +45,12 @@ export function SeatScreen(props: SeatScreenProps) {
           type="button"
         >＋</button>
       </div>
+      </div>
       <div aria-hidden="true" className="screen-indicator">SCREEN</div>
       <div role="group" aria-label="좌석 상태 안내" className="seat-legend">
-        <span>선택 가능</span><span>선택됨</span><span>선택 불가</span>
+        <span><i className="legend-open" aria-hidden="true">○</i>선택 가능</span><span><i className="legend-selected" aria-hidden="true">✓</i>선택됨</span><span><i className="legend-taken" aria-hidden="true">×</i>선택 불가</span>
       </div>
+      <div className="seat-map-scroll" tabIndex={0} aria-label="좌석 배치도 가로 스크롤">
       <div role="group" aria-label="좌석 배치도" className="seat-map">
         {rows.map(([row, seats]) => (
           <div className="seat-row" key={row}>
@@ -64,13 +68,17 @@ export function SeatScreen(props: SeatScreenProps) {
                   key={seat.id}
                   onClick={() => props.onToggleSeat(seat.id)}
                   type="button"
-                >{seat.number}</button>
+                ><span>{seat.number}</span><span className="seat-symbol" aria-hidden="true">{occupied ? "×" : selected ? "✓" : "○"}</span></button>
               );
             })}
           </div>
         ))}
       </div>
+      </div>
+      <div className="seat-selection-summary" aria-live="polite">
       <p>{props.selectedSeatIds.length} / {props.audienceCount}석 선택 · {total.toLocaleString("ko-KR")}원</p>
+      <p className="selected-seat-names">{props.selectedSeatIds.length ? props.selectedSeatIds.join(" · ") : "원하는 좌석을 터치해 주세요"}</p>
+      </div>
       <p className="pricing-note">CGV 일반 2D 성인 기준 예시 요금이며, 실제 금액은 지점에 따라 다를 수 있습니다.</p>
       {props.bookingError ? <p role="alert">{props.bookingError}</p> : null}
       <div className="screen-actions">

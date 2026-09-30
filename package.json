@@ -1,12 +1,12 @@
 {
-  "name": "yakitei-kiosk",
+  "name": "cinema-reservation-kiosk",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "test": "node --import tsx --test src/lib/kiosk/combo-stats.test.ts src/components/kiosk/kiosk-app.test.tsx"
+    "test": "node --import tsx --test src/lib/cinema/catalog.test.ts src/lib/cinema/booking.test.ts src/lib/cinema/booking-store.test.ts src/components/cinema/kiosk-app.test.tsx src/components/cinema/showtime-seat-screen.test.tsx src/components/cinema/booking-completion.test.tsx src/components/cinema/lookup-screen.test.tsx"
   },
   "dependencies": {
     "next": "^15.3.0",

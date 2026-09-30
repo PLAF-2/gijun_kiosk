@@ -52,7 +52,7 @@ Use the ten user-supplied posters as the movie catalog, in this order:
 | 비긴 어게인 | 15세 | 104분 | `/posters/begin-again.jpg` |
 | 쥬라기 월드: 새로운 시작 | 12세 | 133분 | `/posters/jurassic-world-rebirth.jpg` |
 
-These are static demo catalog entries. Keep each image local and render the poster title as alt text. Use standard adult 2D sample prices of 14,000원 Monday through Thursday and 15,000원 Friday through Sunday. The demo showtimes all start after 10:00. CGV price and time bands vary by location, so show a short note that the values are a general 2D example and are not a live CGV quote. Do not add dynamic theater pricing, discounts, or special-format prices.
+These are static demo catalog entries. Keep each image local. Movie card images use empty alt text because the same button contains the movie title as visible HTML text. Use standard adult 2D sample prices of 14,000원 Monday through Thursday and 15,000원 Friday through Sunday. The demo showtimes all start after 10:00. CGV price and time bands vary by location, so show a short note that the values are a general 2D example and are not a live CGV quote. Do not add dynamic theater pricing, discounts, or special-format prices.
 
 ## Primary Booking Flow
 
