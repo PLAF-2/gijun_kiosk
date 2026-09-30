@@ -16,18 +16,25 @@ function isReservation(value: unknown): value is Reservation {
   return (
     typeof value.id === "string" &&
     typeof value.code === "string" &&
+    /^C\d{6}$/.test(value.code) &&
     typeof value.screeningId === "string" &&
     typeof value.movieId === "string" &&
     typeof value.movieTitle === "string" &&
     typeof value.screeningDate === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(value.screeningDate) &&
     typeof value.startTime === "string" &&
+    /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value.startTime) &&
     typeof value.auditorium === "string" &&
     Number.isInteger(value.audienceCount) &&
     (value.audienceCount as number) > 0 &&
+    (value.audienceCount as number) <= 8 &&
     Array.isArray(value.seatIds) &&
-    value.seatIds.every((seatId) => typeof seatId === "string") &&
+    value.seatIds.length === value.audienceCount &&
+    value.seatIds.every((seatId) => typeof seatId === "string" && /^[A-D][1-8]$/.test(seatId)) &&
+    new Set(value.seatIds).size === value.seatIds.length &&
     typeof value.total === "number" &&
     Number.isFinite(value.total) &&
+    value.total >= 0 &&
     (value.status === "booked" || value.status === "cancelled") &&
     typeof value.createdAt === "string"
   );

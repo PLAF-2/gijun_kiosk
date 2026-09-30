@@ -183,13 +183,16 @@ export function CinemaKioskApp() {
   }
 
   function handleSelectMovie(movieId: string) {
+    if (selectedMovieId === movieId) return;
     setSelectedMovieId(movieId);
     setSelection(createInitialBookingSelection());
   }
 
   function handleContinueFromMovies() {
     if (!selectedMovie) return;
-    setSelection(createInitialBookingSelection(dates[0]?.key ?? null));
+    setSelection((current) => current.selectedDate
+      ? current
+      : createInitialBookingSelection(dates[0]?.key ?? null));
     setStep("showtime");
   }
 
