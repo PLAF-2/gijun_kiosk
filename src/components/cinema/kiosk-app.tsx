@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { BookingReviewScreen } from "@/components/cinema/booking-review-screen";
 import { CompleteScreen } from "@/components/cinema/complete-screen";
 import { KioskHeader } from "@/components/cinema/kiosk-header";
+import { LookupScreen } from "@/components/cinema/lookup-screen";
 import { MovieScreen } from "@/components/cinema/movie-screen";
 import { SeatScreen } from "@/components/cinema/seat-screen";
 import { ShowtimeScreen } from "@/components/cinema/showtime-screen";
@@ -305,7 +306,10 @@ export function CinemaKioskApp() {
     case "home":
       screen = (
         <StartScreen
-          onLookupBooking={() => setStep("lookup")}
+          onLookupBooking={() => {
+            setStorageWarning(false);
+            setStep("lookup");
+          }}
           onStartBooking={handleStartBooking}
         />
       );
@@ -379,16 +383,12 @@ export function CinemaKioskApp() {
       break;
     case "lookup":
       screen = (
-        <section className="screen-card">
-          <div className="screen-heading">
-            <p className="eyebrow">BOOKING LOOKUP</p>
-            <h1>예매 조회·취소</h1>
-          </div>
-          <p>예매 조회 기능을 준비하고 있어요.</p>
-          <button className="secondary-button" onClick={handleHome} type="button">
-            처음으로
-          </button>
-        </section>
+        <LookupScreen
+          onCancelReservation={handleCancelReservation}
+          onHome={handleHome}
+          reservations={store.reservations}
+          storageWarning={storageWarning}
+        />
       );
       break;
     default:
