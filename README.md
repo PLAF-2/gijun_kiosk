@@ -10,7 +10,7 @@ npm run dev
 npm run build
 ```
 
-개발 화면은 http://localhost:3000 입니다. 빌드 결과는 `out/`에 생성됩니다. GitHub Actions에서는 `/first-project` 경로를 사용합니다.
+개발 화면은 http://localhost:3000 입니다. 빌드 결과는 `out/`에 생성됩니다. GitHub Actions에서는 저장소 이름을 배포 경로로 사용합니다 (`PLAF-2/gijun_kiosk`는 `/gijun_kiosk`).
 
 ## 이용 흐름
 

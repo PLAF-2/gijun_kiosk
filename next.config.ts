@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const isGitHubPages = process.env.GITHUB_ACTIONS === "true";
-const repoName = "first-project";
+const repoName = process.env.GITHUB_REPOSITORY?.split("/").at(-1) || "gijun_kiosk";
 const basePath = isGitHubPages ? `/${repoName}` : "";
 
 const nextConfig: NextConfig = {
