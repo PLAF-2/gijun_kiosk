@@ -27,3 +27,4 @@ These are browser-local demo transactions, with no real payment or shared invent
 - Browser inspection found no application errors. One development Fast Refresh warning occurred while source files were edited.
 - Final `npm run build` passed, including TypeScript validation and static export (exit 0). Home first-load JavaScript is 111 kB. Next.js emitted a workspace-root warning because this worktree is nested under another npm project.
 - `git diff --check` passed. Existing automated tests were not rerun during this finishing pass.
+- Integrated locally into `main`. The main checkout build also passed after limiting TypeScript input to app source and Next.js configuration; unrelated temporary project copies are no longer checked. Restored the existing matching Windows SWC package from the worktree installation for local development.
