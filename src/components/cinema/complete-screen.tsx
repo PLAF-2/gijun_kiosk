@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { Reservation } from "@/lib/cinema/types";
+import { paymentMethodLabel } from "@/lib/cinema/payments";
 
 type CompleteScreenProps = {
   reservation: Reservation;
@@ -51,15 +52,18 @@ export function CompleteScreen(props: CompleteScreenProps) {
       <h1 ref={statusHeadingRef} tabIndex={-1}>
         {props.cancelled ? "예매가 취소되었습니다" : "예매가 완료되었습니다"}
       </h1>
+      {props.cancelled ? <p>취소 내역은 취소 후 1분이 지나면 자동 삭제됩니다.</p> : null}
       <p>예매 번호</p>
       <p className="reservation-code" aria-label={`예매 번호 ${props.reservation.code}`}>
         {props.reservation.code}
       </p>
       <dl className="booking-summary">
         <div><dt>영화</dt><dd>{props.reservation.movieTitle}</dd></div>
+        {props.reservation.theaterName ? <div><dt>극장</dt><dd>{props.reservation.regionName} · {props.reservation.theaterName}</dd></div> : null}
         <div><dt>상영</dt><dd>{props.reservation.screeningDate} {props.reservation.startTime} · {props.reservation.auditorium}</dd></div>
         <div><dt>인원</dt><dd>{props.reservation.audienceCount}명</dd></div>
         <div><dt>좌석</dt><dd>{props.reservation.seatIds.join(", ")}</dd></div>
+        {props.reservation.paymentMethod ? <div><dt>결제 방식</dt><dd>{paymentMethodLabel(props.reservation.paymentMethod)}</dd></div> : null}
         <div><dt>결제 금액</dt><dd>{props.reservation.total.toLocaleString("ko-KR")}원</dd></div>
       </dl>
       {props.storageWarning ? (

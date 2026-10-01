@@ -1,4 +1,6 @@
 import type { Movie, Screening, Seat } from "@/lib/cinema/types";
+import { buildTheaterSchedule } from "@/lib/cinema/schedule";
+import { getTheater } from "@/lib/cinema/theaters";
 
 export const movies: Movie[] = [
   {
@@ -130,7 +132,14 @@ export function getDemoTicketPrice(dateKey: string): number {
   return weekday === 0 || weekday >= 5 ? 15000 : 14000;
 }
 
-export function getScreenings(movieId: string, date: string): Screening[] {
+export function getScreenings(movieId: string, date: string, theaterId?: string): Screening[] {
+  if (theaterId !== undefined) {
+    const theater = getTheater(theaterId);
+    if (!theater) return [];
+    return buildTheaterSchedule(theater, date, movies, getDemoTicketPrice(date))
+      .filter((screening) => screening.movieId === movieId);
+  }
+
   return showtimes.map((startTime, index) => ({
     id: `${movieId}:${date}:${startTime.replace(":", "")}`,
     movieId,

@@ -6,6 +6,7 @@ export type DateOption = { key: string; label: string };
 
 type ShowtimeScreenProps = {
   movie: Movie;
+  theaterName?: string;
   dates: DateOption[];
   selectedDate: string;
   screenings: Screening[];
@@ -19,7 +20,7 @@ export function ShowtimeScreen(props: ShowtimeScreenProps) {
   return (
     <section className="screen-card">
       <div className="screen-heading">
-        <p className="eyebrow">{props.movie.title}</p>
+        <p className="eyebrow">{props.movie.title}{props.theaterName ? ` · ${props.theaterName}` : ""}</p>
         <h1>날짜와 시간을 선택하세요</h1>
       </div>
       <div role="group" aria-label="상영 날짜" className="date-options">
@@ -41,7 +42,7 @@ export function ShowtimeScreen(props: ShowtimeScreenProps) {
           const available = Math.max(0, screening.seats.length - occupied.size);
           const soldOut = available === 0;
           const price = screening.ticketPrice.toLocaleString("ko-KR");
-          const availabilityLabel = soldOut ? "매진" : `잔여 좌석 ${available}석`;
+          const availabilityLabel = soldOut ? "매진" : `잔여 ${available} / ${screening.seats.length}석`;
 
           return (
             <button
@@ -53,6 +54,7 @@ export function ShowtimeScreen(props: ShowtimeScreenProps) {
               type="button"
             >
               <strong>{screening.startTime}</strong>
+              {screening.endTime ? <small className="showtime-end">~ {screening.endTime} 종료</small> : null}
               <span>{screening.auditorium}</span>
               <span>{availabilityLabel}</span>
               <span>{price}원 / 1인</span>
@@ -60,6 +62,7 @@ export function ShowtimeScreen(props: ShowtimeScreenProps) {
           );
         })}
       </div>
+      {props.screenings.length === 0 ? <p className="lookup-message" role="status">이 날짜에는 상영 일정이 없습니다. 다른 날짜를 선택해 주세요.</p> : null}
       <p className="pricing-note">CGV 일반 2D 성인 기준 예시 요금이며, 실제 금액은 지점에 따라 다를 수 있습니다.</p>
     </section>
   );

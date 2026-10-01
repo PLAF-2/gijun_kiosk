@@ -1,18 +1,22 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BookingReviewScreen } from "@/components/cinema/booking-review-screen";
 import { CompleteScreen } from "@/components/cinema/complete-screen";
 import { KioskHeader } from "@/components/cinema/kiosk-header";
 import { LookupScreen } from "@/components/cinema/lookup-screen";
 import { MovieScreen } from "@/components/cinema/movie-screen";
+import { PaymentScreen } from "@/components/cinema/payment-screen";
 import { SeatScreen } from "@/components/cinema/seat-screen";
 import { ShowtimeScreen } from "@/components/cinema/showtime-screen";
 import { StartScreen } from "@/components/cinema/start-screen";
-import { cancelReservation, canContinueWithSeats, computeBookingTotal, createReservation, getOccupiedSeatIds } from "@/lib/cinema/booking";
+import { TheaterScreen } from "@/components/cinema/theater-screen";
+import { cancelReservation, canContinueWithSeats, computeBookingTotal, createReservation, getCancellationExpiry, getOccupiedSeatIds, purgeExpiredCancellations, stampLegacyCancellations } from "@/lib/cinema/booking";
 import { getDemoDates, getScreenings, movies } from "@/lib/cinema/catalog";
-import { readBookingStore, writeBookingStore } from "@/lib/cinema/booking-store";
-import type { BookingStep, BookingStore, Movie, Reservation, Screening } from "@/lib/cinema/types";
+import { readBookingStore, readBookingStoreSnapshot, writeBookingStore } from "@/lib/cinema/booking-store";
+import { isValidPhoneNumber, normalizePhoneNumber } from "@/lib/cinema/contact";
+import { regions, theaters } from "@/lib/cinema/theaters";
+import type { BookingStep, BookingStore, Movie, PaymentMethod, Reservation, Screening } from "@/lib/cinema/types";
 
 const emptyStore: BookingStore = { version: 1, reservations: [] };
 
@@ -23,6 +27,8 @@ type DemoPaymentInput = {
   seatIds: string[];
   reservations: Reservation[];
   now?: Date;
+  phoneNumber?: string;
+  paymentMethod?: PaymentMethod;
 };
 
 export type DemoPaymentResult =
@@ -33,6 +39,7 @@ export type DemoPaymentResult =
 export function attemptDemoPayment(input: DemoPaymentInput): DemoPaymentResult {
   if (
     input.movie.id !== input.screening.movieId ||
+    (input.phoneNumber !== undefined && !isValidPhoneNumber(input.phoneNumber)) ||
     !canContinueWithSeats(input.audienceCount, input.seatIds) ||
     input.seatIds.some((seatId) => !input.screening.seats.some((seat) => seat.id === seatId))
   ) {
@@ -52,6 +59,8 @@ export function attemptDemoPayment(input: DemoPaymentInput): DemoPaymentResult {
       input.seatIds,
       input.reservations.map((entry) => entry.code),
       input.now,
+      input.phoneNumber,
+      input.paymentMethod,
     ),
   };
 }
@@ -152,44 +161,142 @@ export function CinemaKioskApp() {
   const [store, setStore] = useState<BookingStore>(emptyStore);
   const [storeLoaded, setStoreLoaded] = useState(false);
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
+  const [selectedRegionId, setSelectedRegionId] = useState(regions[0].id);
+  const [selectedTheaterId, setSelectedTheaterId] = useState<string | null>(null);
   const [selection, setSelection] = useState<BookingSelectionState>(() => createInitialBookingSelection());
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState(false);
+  const hasUnsavedChangesRef = useRef(false);
   const [activeReservationId, setActiveReservationId] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
   useEffect(() => {
-    setStore(readBookingStore());
+    const loaded = readBookingStore();
+    const reservations = purgeExpiredCancellations(stampLegacyCancellations(loaded.reservations));
+    const prepared = reservations === loaded.reservations ? loaded : { ...loaded, reservations };
+    if (prepared !== loaded) {
+      hasUnsavedChangesRef.current = !writeBookingStore(prepared);
+      setStorageWarning(hasUnsavedChangesRef.current);
+    }
+    setStore(prepared);
     setStoreLoaded(true);
   }, []);
 
+  useEffect(() => {
+    if (!storeLoaded) return;
+    let timer: number | undefined;
+
+    function cleanAndSchedule() {
+      window.clearTimeout(timer);
+      const now = Date.now();
+      const remaining = purgeExpiredCancellations(store.reservations, now);
+      if (remaining !== store.reservations) {
+        const remainingIds = new Set(remaining.map((reservation) => reservation.id));
+        const expiredIds = new Set(store.reservations.filter((reservation) => !remainingIds.has(reservation.id)).map((reservation) => reservation.id));
+        const persisted = readBookingStoreSnapshot();
+        const base = persisted ?? store;
+        const combined = new Map(base.reservations.map((reservation) => [reservation.id, reservation]));
+        // Preserve unsaved memory records without overwriting another tab's newer bookings.
+        if (hasUnsavedChangesRef.current && persisted) {
+          for (const reservation of store.reservations) {
+            const saved = combined.get(reservation.id);
+            if (!saved || (reservation.status === "cancelled" && saved.status === "booked")) {
+              combined.set(reservation.id, reservation);
+            }
+          }
+        }
+        const reservations = purgeExpiredCancellations([...combined.values()], now).filter((reservation) => !expiredIds.has(reservation.id));
+        const nextStore = { ...base, reservations };
+        hasUnsavedChangesRef.current = !writeBookingStore(nextStore);
+        setStorageWarning(hasUnsavedChangesRef.current);
+        setStore(nextStore);
+        return;
+      }
+      const deadlines = store.reservations.map(getCancellationExpiry).filter((deadline): deadline is number => deadline !== null);
+      if (deadlines.length > 0) {
+        timer = window.setTimeout(cleanAndSchedule, Math.min(2_147_483_647, Math.max(0, Math.min(...deadlines) - Date.now())));
+      }
+    }
+
+    function onVisibilityChange() {
+      if (!document.hidden) cleanAndSchedule();
+    }
+
+    cleanAndSchedule();
+    window.addEventListener("focus", cleanAndSchedule);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", cleanAndSchedule);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [store, storeLoaded]);
+
+  useEffect(() => {
+    if (storeLoaded && step === "complete" && activeReservationId && !store.reservations.some((reservation) => reservation.id === activeReservationId)) {
+      setActiveReservationId(null);
+      setStep("home");
+    }
+  }, [store, storeLoaded, step, activeReservationId]);
+
   const selectedMovie = movies.find((movie) => movie.id === selectedMovieId);
+  const selectedTheater = theaters.find((theater) => theater.id === selectedTheaterId);
   const dates = getDemoDates(new Date()).map(({ key, date }) => ({
     key,
     label: date.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" }),
   }));
-  const screenings = selectedMovie && selection.selectedDate
-    ? getScreenings(selectedMovie.id, selection.selectedDate)
-    : [];
+  const screenings = useMemo(() => selectedMovie && selectedTheater && selection.selectedDate
+    ? getScreenings(selectedMovie.id, selection.selectedDate, selectedTheater.id)
+    : [], [selectedMovie, selectedTheater, selection.selectedDate]);
   const selectedScreening = screenings.find((screening) => screening.id === selection.selectedScreeningId);
   const activeReservation = store.reservations.find((reservation) => reservation.id === activeReservationId);
 
   function handleStartBooking() {
+    setPhoneNumber("");
+    setPaymentMethod("card");
     setBookingError(null);
     setStorageWarning(false);
     setActiveReservationId(null);
     setSelectedMovieId(null);
+    setSelectedTheaterId(null);
     setSelection(createInitialBookingSelection());
     setStep("movie");
   }
 
   function handleSelectMovie(movieId: string) {
-    if (selectedMovieId === movieId) return;
-    setSelectedMovieId(movieId);
-    setSelection(createInitialBookingSelection());
+    if (selectedMovieId !== movieId) {
+      setSelectedMovieId(movieId);
+      setSelectedTheaterId(null);
+      setSelection(createInitialBookingSelection());
+    }
+    setBookingError(null);
+    setStep("theater");
   }
 
   function handleContinueFromMovies() {
     if (!selectedMovie) return;
+    setStep("theater");
+  }
+
+  function handleSelectRegion(regionId: string) {
+    if (regionId === selectedRegionId) return;
+    setSelectedRegionId(regionId);
+    setSelectedTheaterId(null);
+    setSelection((current) => createInitialBookingSelection(current.selectedDate));
+    setBookingError(null);
+  }
+
+  function handleSelectTheater(theaterId: string) {
+    const theater = theaters.find((entry) => entry.id === theaterId && entry.regionId === selectedRegionId);
+    if (!theater || theaterId === selectedTheaterId) return;
+    setSelectedTheaterId(theaterId);
+    setSelection((current) => createInitialBookingSelection(current.selectedDate));
+    setBookingError(null);
+  }
+
+  function handleContinueFromTheaters() {
+    if (!selectedMovie || !selectedTheater) return;
     setSelection((current) => current.selectedDate
       ? current
       : createInitialBookingSelection(dates[0]?.key ?? null));
@@ -224,7 +331,7 @@ export function CinemaKioskApp() {
   }
 
   function handleDemoPayment() {
-    if (!selectedMovie || !selectedScreening) return;
+    if (!selectedMovie || !selectedScreening || !isValidPhoneNumber(phoneNumber)) return;
 
     const result = attemptDemoPayment({
       movie: selectedMovie,
@@ -232,6 +339,8 @@ export function CinemaKioskApp() {
       audienceCount: selection.audienceCount,
       seatIds: selection.selectedSeatIds,
       reservations: store.reservations,
+      phoneNumber,
+      paymentMethod,
     });
     if (result.status === "invalid") {
       setBookingError("인원에 맞는 좌석을 다시 선택해 주세요.");
@@ -247,6 +356,7 @@ export function CinemaKioskApp() {
     }
 
     const update = addReservationToStore(store, result.reservation);
+    hasUnsavedChangesRef.current = update.storageWarning;
     setStore(update.store);
     setStorageWarning(update.storageWarning);
     setActiveReservationId(result.reservation.id);
@@ -256,6 +366,7 @@ export function CinemaKioskApp() {
 
   function handleCancelReservation(reservationId: string) {
     const update = cancelReservationInStore(store, reservationId);
+    hasUnsavedChangesRef.current = update.storageWarning;
     setStore(update.store);
     setStorageWarning(update.storageWarning);
   }
@@ -263,9 +374,11 @@ export function CinemaKioskApp() {
   function handleBack() {
     const previousStep: Partial<Record<BookingStep, BookingStep>> = {
       movie: "home",
-      showtime: "movie",
+      theater: "movie",
+      showtime: "theater",
       seats: "showtime",
       review: "seats",
+      payment: "review",
       lookup: "home",
     };
     setStep(previousStep[step] ?? "home");
@@ -278,21 +391,25 @@ export function CinemaKioskApp() {
   }
 
   const stepLabels: Record<BookingStep, string> = {
-    home: "시작",
+    home: "",
     movie: "영화 선택",
+    theater: "극장 선택",
     showtime: "상영 선택",
     seats: "좌석 선택",
     review: "예매 확인",
+    payment: "결제",
     complete: "예매 완료",
     lookup: "예매 조회·취소",
   };
   const stepNumbers: Record<BookingStep, number> = {
     home: 0,
     movie: 1,
-    showtime: 2,
-    seats: 3,
-    review: 4,
-    complete: 5,
+    theater: 2,
+    showtime: 3,
+    seats: 4,
+    review: 5,
+    payment: 6,
+    complete: 7,
     lookup: 0,
   };
 
@@ -327,9 +444,15 @@ export function CinemaKioskApp() {
         />
       );
       break;
+    case "theater":
+      screen = selectedMovie ? (
+        <TheaterScreen movie={selectedMovie} regionId={selectedRegionId} selectedTheaterId={selectedTheaterId} onRegionChange={handleSelectRegion} onSelect={handleSelectTheater} onContinue={handleContinueFromTheaters} />
+      ) : null;
+      break;
     case "showtime":
-      screen = selectedMovie && selection.selectedDate ? (
+      screen = selectedMovie && selectedTheater && selection.selectedDate ? (
         <ShowtimeScreen
+          theaterName={selectedTheater.name}
           dates={dates}
           movie={selectedMovie}
           onSelectDate={handleSelectDate}
@@ -344,6 +467,7 @@ export function CinemaKioskApp() {
     case "seats":
       screen = selectedScreening ? (
         <SeatScreen
+          key={selectedScreening.id}
           audienceCount={selection.audienceCount}
           onAudienceCountChange={handleAudienceCountChange}
           onContinue={handleContinueFromSeats}
@@ -358,14 +482,21 @@ export function CinemaKioskApp() {
     case "review":
       screen = selectedMovie && selectedScreening ? (
         <BookingReviewScreen
+          phoneNumber={phoneNumber}
+          onPhoneNumberChange={(value) => setPhoneNumber(normalizePhoneNumber(value))}
           audienceCount={selection.audienceCount}
           movie={selectedMovie}
           onBack={() => setStep("seats")}
-          onPay={handleDemoPayment}
+          onPay={() => setStep("payment")}
           screening={selectedScreening}
           seatIds={selection.selectedSeatIds}
           total={computeBookingTotal(selectedScreening.ticketPrice, selection.audienceCount)}
         />
+      ) : null;
+      break;
+    case "payment":
+      screen = selectedScreening ? (
+        <PaymentScreen total={computeBookingTotal(selectedScreening.ticketPrice, selection.audienceCount)} method={paymentMethod} onMethodChange={setPaymentMethod} onPay={handleDemoPayment} onBack={() => setStep("review")} />
       ) : null;
       break;
     case "complete":
@@ -410,7 +541,7 @@ export function CinemaKioskApp() {
       <KioskHeader
         onBack={step === "home" ? undefined : handleBack}
         onHome={step === "home" ? undefined : handleHome}
-        stepCount={5}
+        stepCount={7}
         stepLabel={stepLabels[step]}
         stepNumber={stepNumbers[step]}
       />

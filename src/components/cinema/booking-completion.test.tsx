@@ -32,7 +32,7 @@ const reservation: Reservation = {
 
 const emptyStore: BookingStore = { version: 1, reservations: [] };
 
-test("booking review shows the complete order and only a clearly labeled demo payment action", () => {
+test("booking review shows the complete order and leads to payment selection", () => {
   const html = renderToStaticMarkup(
     <BookingReviewScreen
       movie={movie}
@@ -52,7 +52,7 @@ test("booking review shows the complete order and only a clearly labeled demo pa
   assert.match(html, /2명/);
   assert.match(html, /A3, A4/);
   assert.match(html, /28,000원/);
-  assert.match(html, /데모 결제 완료/);
+  assert.match(html, /결제 방식 선택/);
   assert.doesNotMatch(html, /카드 결제|결제하기|PAYMENT/);
 });
 
