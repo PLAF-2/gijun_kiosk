@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { Reservation } from "@/lib/cinema/types";
+import type { CinemaStampId } from "@/lib/cinema/collectibles";
 import { paymentMethodLabel } from "@/lib/cinema/payments";
+import { PriceBreakdownRows } from "@/components/cinema/price-breakdown-rows";
+import { BookingCredits } from "@/components/cinema/booking-credits";
+import styles from "./booking-credits.module.css";
 
 type CompleteScreenProps = {
   reservation: Reservation;
@@ -8,6 +12,7 @@ type CompleteScreenProps = {
   storageWarning?: boolean;
   onCancel: () => void;
   onHome: () => void;
+  foundStampIds?: CinemaStampId[];
 };
 
 export function CompleteScreen(props: CompleteScreenProps) {
@@ -47,31 +52,20 @@ export function CompleteScreen(props: CompleteScreenProps) {
   }
 
   return (
-    <section className="screen-card completion-card">
-      <p className="eyebrow">{props.cancelled ? "CANCELLATION COMPLETE" : "RESERVATION COMPLETE"}</p>
-      <h1 ref={statusHeadingRef} tabIndex={-1}>
-        {props.cancelled ? "예매가 취소되었습니다" : "예매가 완료되었습니다"}
-      </h1>
-      {props.cancelled ? <p>취소 내역은 취소 후 1분이 지나면 자동 삭제됩니다.</p> : null}
-      <p>예매 번호</p>
-      <p className="reservation-code" aria-label={`예매 번호 ${props.reservation.code}`}>
-        {props.reservation.code}
-      </p>
-      <dl className="booking-summary">
-        <div><dt>영화</dt><dd>{props.reservation.movieTitle}</dd></div>
-        {props.reservation.theaterName ? <div><dt>극장</dt><dd>{props.reservation.regionName} · {props.reservation.theaterName}</dd></div> : null}
-        <div><dt>상영</dt><dd>{props.reservation.screeningDate} {props.reservation.startTime} · {props.reservation.auditorium}</dd></div>
-        <div><dt>인원</dt><dd>{props.reservation.audienceCount}명</dd></div>
-        <div><dt>좌석</dt><dd>{props.reservation.seatIds.join(", ")}</dd></div>
-        {props.reservation.paymentMethod ? <div><dt>결제 방식</dt><dd>{paymentMethodLabel(props.reservation.paymentMethod)}</dd></div> : null}
-        <div><dt>결제 금액</dt><dd>{props.reservation.total.toLocaleString("ko-KR")}원</dd></div>
-      </dl>
+    <section className={`screen-card completion-card ${styles.completionCard}`}>
+      <div className={styles.statusHeader}>
+        <p>{props.cancelled ? "CANCELLATION COMPLETE" : "RESERVATION COMPLETE"}</p>
+        <h1 ref={statusHeadingRef} tabIndex={-1}>
+          {props.cancelled ? "예매가 취소되었습니다" : "예매가 완료되었습니다"}
+        </h1>
+        {props.cancelled ? <p>취소 내역은 취소 후 1분이 지나면 자동 삭제됩니다.</p> : null}
+      </div>
       {props.storageWarning ? (
         <p role="alert" className="storage-warning">
           예매 정보는 이 화면에 반영됐지만 저장되지 않았습니다. 새로고침 후 예매 조회가 되지 않을 수 있습니다.
         </p>
       ) : null}
-      <div className="screen-actions">
+      <div className={`screen-actions ${styles.completionActions}`}>
         {!props.cancelled && !confirming ? (
           <button
             className="secondary-button"
@@ -97,6 +91,22 @@ export function CompleteScreen(props: CompleteScreenProps) {
         </dialog>
         <button className="primary-button" onClick={props.onHome} type="button">처음으로</button>
       </div>
+      <BookingCredits key={props.reservation.id} reservation={props.reservation} cancelled={props.cancelled} foundStampIds={props.foundStampIds}>
+        <p>예매 번호</p>
+        <p className="reservation-code" aria-label={`예매 번호 ${props.reservation.code}`}>
+          {props.reservation.code}
+        </p>
+        <dl className="booking-summary">
+          <div><dt>영화</dt><dd>{props.reservation.movieTitle}</dd></div>
+          {props.reservation.theaterName ? <div><dt>극장</dt><dd>{props.reservation.regionName} · {props.reservation.theaterName}</dd></div> : null}
+          <div><dt>상영</dt><dd>{props.reservation.screeningDate} {props.reservation.startTime} · {props.reservation.auditorium}</dd></div>
+          <div><dt>인원</dt><dd>{props.reservation.audienceCount}명</dd></div>
+          <div><dt>좌석</dt><dd>{props.reservation.seatIds.join(", ")}</dd></div>
+          {props.reservation.paymentMethod ? <div><dt>결제 방식</dt><dd>{paymentMethodLabel(props.reservation.paymentMethod)}</dd></div> : null}
+          <PriceBreakdownRows breakdown={props.reservation.priceBreakdown} />
+          <div><dt>결제 금액</dt><dd>{props.reservation.total.toLocaleString("ko-KR")}원</dd></div>
+        </dl>
+      </BookingCredits>
     </section>
   );
 }

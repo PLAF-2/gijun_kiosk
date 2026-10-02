@@ -11,12 +11,16 @@ import { SeatScreen } from "@/components/cinema/seat-screen";
 import { ShowtimeScreen } from "@/components/cinema/showtime-screen";
 import { StartScreen } from "@/components/cinema/start-screen";
 import { TheaterScreen } from "@/components/cinema/theater-screen";
+import { MovieAtmosphere, getMovieAtmosphereStyle, movieAtmosphereShellClass } from "@/components/cinema/movie-atmosphere";
+import { CinemaDiscoveries } from "@/components/cinema/cinema-discoveries";
+import type { CinemaStampId } from "@/lib/cinema/collectibles";
 import { cancelReservation, canContinueWithSeats, computeBookingTotal, createReservation, getCancellationExpiry, getOccupiedSeatIds, purgeExpiredCancellations, stampLegacyCancellations } from "@/lib/cinema/booking";
 import { getDemoDates, getScreenings, movies } from "@/lib/cinema/catalog";
 import { readBookingStore, readBookingStoreSnapshot, writeBookingStore } from "@/lib/cinema/booking-store";
-import { isValidPhoneNumber, normalizePhoneNumber } from "@/lib/cinema/contact";
+import { isValidOptionalPhoneNumber, normalizePhoneNumber } from "@/lib/cinema/contact";
+import { calculateBookingPrice, createDiscountSelection } from "@/lib/cinema/discounts";
 import { regions, theaters } from "@/lib/cinema/theaters";
-import type { BookingStep, BookingStore, Movie, PaymentMethod, Reservation, Screening } from "@/lib/cinema/types";
+import type { BookingStep, BookingStore, DiscountSelection, Movie, PaymentMethod, Reservation, Screening } from "@/lib/cinema/types";
 
 const emptyStore: BookingStore = { version: 1, reservations: [] };
 
@@ -29,17 +33,19 @@ type DemoPaymentInput = {
   now?: Date;
   phoneNumber?: string;
   paymentMethod?: PaymentMethod;
+  discounts?: DiscountSelection;
 };
 
 export type DemoPaymentResult =
   | { status: "invalid" }
+  | { status: "invalid-discount" }
   | { status: "occupied"; occupiedSeatIds: string[] }
   | { status: "success"; reservation: Reservation };
 
 export function attemptDemoPayment(input: DemoPaymentInput): DemoPaymentResult {
   if (
     input.movie.id !== input.screening.movieId ||
-    (input.phoneNumber !== undefined && !isValidPhoneNumber(input.phoneNumber)) ||
+    !isValidOptionalPhoneNumber(input.phoneNumber) ||
     !canContinueWithSeats(input.audienceCount, input.seatIds) ||
     input.seatIds.some((seatId) => !input.screening.seats.some((seat) => seat.id === seatId))
   ) {
@@ -47,6 +53,9 @@ export function attemptDemoPayment(input: DemoPaymentInput): DemoPaymentResult {
   }
 
   const occupied = getOccupiedSeatIds(input.screening, input.reservations);
+  if (!calculateBookingPrice(input.screening.ticketPrice, input.audienceCount, input.discounts)) {
+    return { status: "invalid-discount" };
+  }
   const occupiedSeatIds = input.seatIds.filter((seatId) => occupied.has(seatId));
   if (occupiedSeatIds.length > 0) return { status: "occupied", occupiedSeatIds };
 
@@ -61,6 +70,7 @@ export function attemptDemoPayment(input: DemoPaymentInput): DemoPaymentResult {
       input.now,
       input.phoneNumber,
       input.paymentMethod,
+      input.discounts,
     ),
   };
 }
@@ -170,6 +180,12 @@ export function CinemaKioskApp() {
   const [activeReservationId, setActiveReservationId] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [discounts, setDiscounts] = useState<DiscountSelection>(createDiscountSelection);
+  const [foundStampIds, setFoundStampIds] = useState<CinemaStampId[]>([]);
+
+  function discoverStamp(id: CinemaStampId) {
+    setFoundStampIds((current) => current.includes(id) ? current : [...current, id]);
+  }
 
   useEffect(() => {
     const loaded = readBookingStore();
@@ -250,9 +266,11 @@ export function CinemaKioskApp() {
     ? getScreenings(selectedMovie.id, selection.selectedDate, selectedTheater.id)
     : [], [selectedMovie, selectedTheater, selection.selectedDate]);
   const selectedScreening = screenings.find((screening) => screening.id === selection.selectedScreeningId);
+  const priceBreakdown = selectedScreening ? calculateBookingPrice(selectedScreening.ticketPrice, selection.audienceCount, discounts) : null;
   const activeReservation = store.reservations.find((reservation) => reservation.id === activeReservationId);
 
   function handleStartBooking() {
+    setDiscounts(createDiscountSelection());
     setPhoneNumber("");
     setPaymentMethod("card");
     setBookingError(null);
@@ -266,6 +284,7 @@ export function CinemaKioskApp() {
 
   function handleSelectMovie(movieId: string) {
     if (selectedMovieId !== movieId) {
+      setDiscounts(createDiscountSelection());
       setSelectedMovieId(movieId);
       setSelectedTheaterId(null);
       setSelection(createInitialBookingSelection());
@@ -281,6 +300,7 @@ export function CinemaKioskApp() {
 
   function handleSelectRegion(regionId: string) {
     if (regionId === selectedRegionId) return;
+    setDiscounts(createDiscountSelection());
     setSelectedRegionId(regionId);
     setSelectedTheaterId(null);
     setSelection((current) => createInitialBookingSelection(current.selectedDate));
@@ -290,6 +310,7 @@ export function CinemaKioskApp() {
   function handleSelectTheater(theaterId: string) {
     const theater = theaters.find((entry) => entry.id === theaterId && entry.regionId === selectedRegionId);
     if (!theater || theaterId === selectedTheaterId) return;
+    setDiscounts(createDiscountSelection());
     setSelectedTheaterId(theaterId);
     setSelection((current) => createInitialBookingSelection(current.selectedDate));
     setBookingError(null);
@@ -304,15 +325,18 @@ export function CinemaKioskApp() {
   }
 
   function handleSelectDate(date: string) {
+    if (date !== selection.selectedDate) setDiscounts(createDiscountSelection());
     setSelection((current) => updateBookingSelection(current, { type: "date", date }));
   }
 
   function handleSelectScreening(screeningId: string) {
+    if (screeningId !== selection.selectedScreeningId) setDiscounts(createDiscountSelection());
     setSelection((current) => updateBookingSelection(current, { type: "screening", screeningId }));
     setStep("seats");
   }
 
   function handleAudienceCountChange(count: number) {
+    if (count !== selection.audienceCount) setDiscounts(createDiscountSelection());
     setBookingError(null);
     setSelection((current) => updateBookingSelection(current, { type: "audience-count", count }));
   }
@@ -331,7 +355,7 @@ export function CinemaKioskApp() {
   }
 
   function handleDemoPayment() {
-    if (!selectedMovie || !selectedScreening || !isValidPhoneNumber(phoneNumber)) return;
+    if (!selectedMovie || !selectedScreening || !isValidOptionalPhoneNumber(phoneNumber)) return;
 
     const result = attemptDemoPayment({
       movie: selectedMovie,
@@ -341,7 +365,13 @@ export function CinemaKioskApp() {
       reservations: store.reservations,
       phoneNumber,
       paymentMethod,
+      discounts,
     });
+    if (result.status === "invalid-discount") {
+      setBookingError("혜택 인원과 혜택 적용 조건을 다시 확인해 주세요.");
+      setStep("review");
+      return;
+    }
     if (result.status === "invalid") {
       setBookingError("인원에 맞는 좌석을 다시 선택해 주세요.");
       setSelection((current) => ({ ...current, selectedSeatIds: [] }));
@@ -385,6 +415,7 @@ export function CinemaKioskApp() {
   }
 
   function handleHome() {
+    setFoundStampIds([]);
     setBookingError(null);
     setActiveReservationId(null);
     setStep("home");
@@ -486,17 +517,25 @@ export function CinemaKioskApp() {
           onPhoneNumberChange={(value) => setPhoneNumber(normalizePhoneNumber(value))}
           audienceCount={selection.audienceCount}
           movie={selectedMovie}
+          discounts={discounts}
+          priceBreakdown={priceBreakdown ?? undefined}
+          bookingError={bookingError}
+          onDiscountsChange={(value) => { setDiscounts(value); setBookingError(null); }}
           onBack={() => setStep("seats")}
-          onPay={() => setStep("payment")}
+          onPay={() => {
+            if (!priceBreakdown) { setBookingError("혜택 적용 조건을 확인해 주세요."); return; }
+            setBookingError(null);
+            setStep("payment");
+          }}
           screening={selectedScreening}
           seatIds={selection.selectedSeatIds}
-          total={computeBookingTotal(selectedScreening.ticketPrice, selection.audienceCount)}
+          total={priceBreakdown?.total ?? computeBookingTotal(selectedScreening.ticketPrice, selection.audienceCount)}
         />
       ) : null;
       break;
     case "payment":
       screen = selectedScreening ? (
-        <PaymentScreen total={computeBookingTotal(selectedScreening.ticketPrice, selection.audienceCount)} method={paymentMethod} onMethodChange={setPaymentMethod} onPay={handleDemoPayment} onBack={() => setStep("review")} />
+        <PaymentScreen total={priceBreakdown?.total ?? computeBookingTotal(selectedScreening.ticketPrice, selection.audienceCount)} priceBreakdown={priceBreakdown ?? undefined} method={paymentMethod} onMethodChange={setPaymentMethod} onPay={handleDemoPayment} onBack={() => setStep("review")} />
       ) : null;
       break;
     case "complete":
@@ -506,6 +545,7 @@ export function CinemaKioskApp() {
           onCancel={() => handleCancelReservation(activeReservation.id)}
           onHome={handleHome}
           reservation={activeReservation}
+          foundStampIds={foundStampIds}
           storageWarning={storageWarning}
         />
       ) : (
@@ -536,16 +576,23 @@ export function CinemaKioskApp() {
       );
   }
 
+  const atmosphereMovieId = step === "home" || step === "lookup" ? undefined : selectedMovie?.id;
+
   return (
-    <main className="cinema-shell">
+    <>
+    <MovieAtmosphere movieId={atmosphereMovieId} />
+    <main className={`cinema-shell${atmosphereMovieId ? ` ${movieAtmosphereShellClass}` : ""}`} style={{ ...getMovieAtmosphereStyle(atmosphereMovieId), position: "relative", zIndex: 1 }}>
       <KioskHeader
         onBack={step === "home" ? undefined : handleBack}
         onHome={step === "home" ? undefined : handleHome}
+        onDiscoverLogo={() => discoverStamp("reel")}
         stepCount={7}
         stepLabel={stepLabels[step]}
         stepNumber={stepNumbers[step]}
       />
+      {step !== "lookup" ? <CinemaDiscoveries movieId={atmosphereMovieId} foundStampIds={foundStampIds} onDiscover={discoverStamp} /> : null}
       {screen}
     </main>
+    </>
   );
 }

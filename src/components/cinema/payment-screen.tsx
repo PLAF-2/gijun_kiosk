@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { paymentMethods } from "@/lib/cinema/payments";
-import type { PaymentMethod } from "@/lib/cinema/types";
+import type { BookingPriceBreakdown, PaymentMethod } from "@/lib/cinema/types";
 
 type PaymentScreenProps = {
   total: number;
@@ -8,6 +8,7 @@ type PaymentScreenProps = {
   onMethodChange: (method: PaymentMethod) => void;
   onPay: () => void;
   onBack: () => void;
+  priceBreakdown?: BookingPriceBreakdown;
 };
 
 export function PaymentScreen(props: PaymentScreenProps) {
@@ -21,6 +22,7 @@ export function PaymentScreen(props: PaymentScreenProps) {
         <h1>{showInstructions ? `${option.label}로 결제합니다` : "결제 방식을 선택하세요"}</h1>
       </div>
       <div className="payment-total"><span>결제 금액</span><strong>{props.total.toLocaleString("ko-KR")}원</strong></div>
+      {props.priceBreakdown && props.priceBreakdown.discountTotal > 0 ? <p className="payment-discount-note">혜택 적용 전 {props.priceBreakdown.originalTotal.toLocaleString("ko-KR")}원 − 혜택 금액 {props.priceBreakdown.discountTotal.toLocaleString("ko-KR")}원</p> : null}
       {showInstructions ? (
         <div className="payment-instructions" aria-live="polite">
           <div className={`payment-reader reader-${option.reader}`} aria-hidden="true">

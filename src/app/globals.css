@@ -48,6 +48,8 @@ img { display: block; max-width: 100%; }
 .cinema-brand { font-size: 29px; font-weight: 900; letter-spacing: 0.05em; white-space: nowrap; }
 .cinema-brand::before { content: ""; display: inline-block; width: 10px; height: 25px; margin-right: 12px; background: var(--accent); border-radius: 3px; vertical-align: -2px; }
 .cinema-brand span { display: block; margin: 4px 0 0 22px; color: var(--muted); font-size: 10px; letter-spacing: 0.34em; font-weight: 500; }
+.cinema-brand .cinema-brand-discovery { min-height: 44px; min-width: 0; padding: 0; border: 0; border-radius: 5px; background: transparent; color: inherit; font-size: inherit; font-weight: inherit; letter-spacing: inherit; }
+.cinema-brand .cinema-brand-discovery:hover { background: transparent; color: var(--accent-light); }
 .header-progress { margin-left: auto; min-width: 166px; }
 .header-progress p { margin: 0; color: var(--muted); font-size: 15px; }
 .progress-track { height: 3px; margin-top: 9px; background: var(--line); border-radius: 3px; overflow: hidden; }
@@ -391,4 +393,90 @@ dialog .screen-actions button { min-width: 0; padding-inline: 14px; font-size: 1
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   button { transition: none; }
+}
+
+.discount-panel { margin: 28px 0; padding: 24px; border: 1px solid var(--line); border-radius: 18px; background: #0d1625; }
+.discount-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.discount-heading h2 { margin: 0; font-size: 24px; }
+.discount-heading p { margin: 0; color: var(--accent-light); font-size: 15px; }
+.discount-categories { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.discount-categories button { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; min-height: 64px; padding: 14px; font-size: 17px; word-break: keep-all; }
+.discount-categories button.is-active { border-color: var(--accent); background: #2b254d; color: var(--accent-light); }
+.discount-categories button span { font-size: 23px; }
+.discount-picker { margin-top: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #111c2e; }
+.discount-picker[hidden] { display: none; }
+.discount-picker-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.discount-picker-heading h3 { margin: 0; font-size: 18px; }
+.discount-picker-heading button { padding: 10px 16px; min-height: 44px; font-size: 14px; }
+.discount-choice-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.discount-choice { min-width: 0; }
+.discount-choice button { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; min-height: 124px; height: 100%; padding: 16px; text-align: left; }
+.discount-choice button.is-selected { border-color: var(--accent); background: #211e37; opacity: 1; }
+.discount-choice:has(> p) button { height: auto; }
+.discount-choice strong { font-size: 16px; word-break: keep-all; }
+.discount-choice button > span { color: var(--muted); font-size: 12px; line-height: 1.5; word-break: keep-all; }
+.discount-choice button > .discount-choice-price { color: var(--accent-light); font-size: 15px; }
+.discount-choice p, .discount-capacity-note { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--accent-light); }
+.selected-discounts { margin-top: 24px; }
+.selected-discounts > h3 { margin: 0 0 12px; font-size: 17px; }
+.discount-empty { margin: 0; padding: 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; }
+.benefit-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.benefit-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.benefit-option.is-applied { border-color: var(--accent); background: #211e37; }
+.benefit-option > div:first-child { min-width: 0; }
+.benefit-option h4 { margin: 0 0 4px; font-size: 17px; line-height: 1.4; word-break: keep-all; }
+.benefit-option p { margin: 0 0 7px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.benefit-option strong { color: var(--accent-light); font-size: 14px; }
+.benefit-counter { display: flex; flex: none; align-items: center; gap: 8px; }
+.benefit-counter button { width: 56px; height: 56px; padding: 0; font-size: 23px; }
+.benefit-counter span { min-width: 22px; text-align: center; font-size: 20px; font-weight: 800; }
+.benefit-counter small { margin-left: 4px; color: var(--muted); font-size: 13px; font-weight: 400; }
+.benefit-option .benefit-remove { min-height: 44px; margin-top: 4px; padding: 8px 12px; color: var(--muted); font-size: 13px; }
+.discount-proof-note, .discount-policy p { margin: 18px 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+.coupon-panel { margin-top: 8px; }
+.coupon-panel h3 { margin: 0 0 16px; font-size: 21px; }
+.coupon-panel label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 14px; }
+.coupon-input-row { display: flex; gap: 12px; }
+.coupon-input-row input { min-width: 0; flex: 1; min-height: 60px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); font-size: 19px; }
+.coupon-input-row input[aria-invalid="true"] { border-color: var(--danger); }
+.coupon-panel .coupon-help { color: var(--muted); font-size: 13px; margin: 12px 0; }
+.coupon-error { margin: 12px 0; color: var(--danger); font-size: 15px; }
+.coupon-examples { display: flex; flex-wrap: wrap; gap: 10px; }
+.coupon-examples button { font-size: 14px; color: var(--accent-light); }
+.applied-coupon { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; margin-top: 10px; border: 1px solid #5d947c; border-radius: 12px; background: #102c27; }
+.applied-coupon strong { display: block; color: #a7edd1; }
+.applied-coupon span { display: block; color: #b6d6c9; margin-top: 6px; font-size: 13px; }
+.discount-policy { margin-top: 18px; color: var(--muted); font-size: 13px; }
+.discount-policy summary { cursor: pointer; min-height: 44px; padding-block: 12px; }
+.discount-policy a { display: inline-block; color: var(--accent-light); padding: 10px 0; }
+.booking-summary .discount-summary-row dt { color: #b3d4c7; font-size: 14px; }
+.booking-summary .discount-summary-row dd, .booking-summary .discount-summary-total dd { color: #a7edd1; font-size: 20px; }
+.payment-discount-note { margin: -12px 0 28px; color: #a7edd1; text-align: right; font-size: 15px; }
+.discount-final { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding-top: 22px; border-top: 1px solid var(--line); }
+.discount-final span { display: block; color: var(--text); font-weight: 700; }
+.discount-final small { display: block; margin-top: 6px; color: #a7edd1; }
+.discount-final > strong { color: var(--accent-light); font-size: 30px; }
+@media (max-width: 900px) { .discount-choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .discount-panel { padding: 18px; margin: 22px 0; }
+  .discount-heading h2 { font-size: 22px; }
+  .benefit-option { padding: 14px; }
+  .benefit-option h4 { font-size: 15px; }
+  .benefit-counter { gap: 5px; }
+  .benefit-counter button { min-width: 48px; width: 48px; min-height: 48px; height: 48px; }
+  .coupon-input-row { gap: 8px; }
+  .coupon-input-row input { font-size: 16px; padding-inline: 12px; }
+  .booking-summary .discount-summary-row dd, .booking-summary .discount-summary-total dd { font-size: 17px; }
+}
+@media (max-width: 600px) {
+  .discount-categories { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .discount-categories button { min-height: 56px; font-size: 16px; }
+  .discount-picker { padding: 12px; }
+}
+@media (max-width: 480px) { .discount-choice-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 440px) {
+  .benefit-option { flex-direction: column; align-items: stretch; }
+  .benefit-counter { justify-content: space-between; }
+  .discount-final { gap: 10px; }
+  .discount-final > strong { font-size: 23px; }
 }

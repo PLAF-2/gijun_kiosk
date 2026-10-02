@@ -5,6 +5,7 @@ const repoName = process.env.GITHUB_REPOSITORY?.split("/").at(-1) || "gijun_kios
 const basePath = isProd ? `/${repoName}` : "";
 
 const nextConfig: NextConfig = {
+  distDir: isProd ? ".next" : ".next-dev",
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },

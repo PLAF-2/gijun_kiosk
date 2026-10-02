@@ -1,5 +1,6 @@
 import { isValidPhoneNumber, normalizePhoneNumber } from "@/lib/cinema/contact";
-import type { Movie, PaymentMethod, Reservation, Screening } from "@/lib/cinema/types";
+import type { DiscountSelection, Movie, PaymentMethod, Reservation, Screening } from "@/lib/cinema/types";
+import { calculateBookingPrice } from "@/lib/cinema/discounts";
 
 const RESERVATION_CODE_SPACE = 1_000_000;
 export const CANCELLED_RESERVATION_TTL_MS = 60_000;
@@ -81,10 +82,13 @@ export function createReservation(
   now = new Date(),
   phoneNumber?: string,
   paymentMethod?: PaymentMethod,
+  discounts?: DiscountSelection,
 ): Reservation {
   if (movie.id !== screening.movieId) {
     throw new Error("영화와 상영 정보가 일치하지 않습니다.");
   }
+  const priceBreakdown = calculateBookingPrice(screening.ticketPrice, audienceCount, discounts);
+  if (!priceBreakdown) throw new Error("할인 적용 조건을 확인해 주세요.");
 
   return {
     id: crypto.randomUUID(),
@@ -97,7 +101,8 @@ export function createReservation(
     auditorium: screening.auditorium,
     audienceCount,
     seatIds: [...seatIds],
-    total: computeBookingTotal(screening.ticketPrice, audienceCount),
+    total: priceBreakdown.total,
+    ...(priceBreakdown.discountTotal > 0 ? { priceBreakdown } : {}),
     status: "booked",
     createdAt: now.toISOString(),
     ...(phoneNumber ? { phoneNumber } : {}),

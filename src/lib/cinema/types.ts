@@ -49,6 +49,16 @@ export type Screening = {
 export type ReservationStatus = "booked" | "cancelled";
 export type PaymentMethod = "card" | "samsung-pay" | "apple-pay" | "kakao-pay" | "naver-pay" | "toss-pay" | "cash";
 
+export type BenefitType = "senior" | "disabledMild" | "disabledSevere" | "disabledCompanion" | "veteran" | "veteranSevere" | "veteranCompanion";
+export type DiscountSelection = { benefits: Partial<Record<BenefitType, number>>; couponCode: string | null };
+export type BookingPriceBreakdown = {
+  originalTotal: number;
+  discountTotal: number;
+  total: number;
+  lines: { label: string; amount: number }[];
+  couponCode?: string;
+};
+
 export type Reservation = {
   id: string;
   code: string;
@@ -61,6 +71,7 @@ export type Reservation = {
   audienceCount: number;
   seatIds: string[];
   total: number;
+  priceBreakdown?: BookingPriceBreakdown;
   status: ReservationStatus;
   createdAt: string;
   cancelledAt?: string;

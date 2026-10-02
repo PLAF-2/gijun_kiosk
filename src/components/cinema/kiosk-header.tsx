@@ -6,6 +6,7 @@ type KioskHeaderProps = {
   stepCount: number;
   onHome?: () => void;
   onBack?: () => void;
+  onDiscoverLogo?: () => void;
 };
 
 export function KioskHeader({
@@ -14,11 +15,12 @@ export function KioskHeader({
   stepCount,
   onHome,
   onBack,
+  onDiscoverLogo,
 }: KioskHeaderProps) {
   return (
     <header className="cinema-header">
       <div className="cinema-brand">
-        CINEMA <span>RESERVATION</span>
+        {onDiscoverLogo ? <button className="cinema-brand-discovery" type="button" onClick={onDiscoverLogo} aria-label="CINEMA 로고의 숨은 필름 찾기">CINEMA</button> : "CINEMA"} <span>RESERVATION</span>
       </div>
       {stepLabel ? <div className="header-progress">
         <p aria-live="polite">{stepNumber > 0 ? `${stepNumber} / ${stepCount} · ` : ""}{stepLabel}</p>

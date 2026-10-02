@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import type { Movie } from "@/lib/cinema/types";
+import { MovieInfoDialog } from "./movie-info-dialog";
+import styles from "./movie-info.module.css";
 
 type MovieScreenProps = {
   movies: Movie[];
@@ -17,6 +19,14 @@ export function MovieScreen({
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollBack, setCanScrollBack] = useState(false);
   const [canScrollForward, setCanScrollForward] = useState(false);
+  const [infoMovie, setInfoMovie] = useState<Movie | null>(null);
+  const infoTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const infoDialogId = useId();
+
+  function closeMovieInfo() {
+    setInfoMovie(null);
+    infoTriggerRef.current?.focus({ preventScroll: true });
+  }
 
   function updateScrollControls() {
     const carousel = carouselRef.current;
@@ -68,26 +78,40 @@ export function MovieScreen({
         {movies.map((movie) => {
           const isSelected = selectedMovieId === movie.id;
           return (
-            <button
-              aria-pressed={isSelected}
-              className={`movie-card${isSelected ? " is-selected" : ""}`}
-              key={movie.id}
-              onClick={() => onSelect(movie.id)}
-              type="button"
-            >
-              <img
-                alt=""
-                className={`movie-poster poster-${movie.posterTheme}`}
-                src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${movie.posterSrc}`}
-              />
-              {isSelected ? <span className="movie-selected-mark" aria-hidden="true">✓ 선택</span> : null}
-              <span className="movie-meta">
-                <strong>{movie.title}</strong>
-                <span>
-                  {movie.ageRating} · {movie.runtimeMinutes}분
+            <div className={styles.movieTile} key={movie.id}>
+              <button
+                aria-pressed={isSelected}
+                className={`movie-card ${styles.posterButton}${isSelected ? " is-selected" : ""}`}
+                onClick={() => onSelect(movie.id)}
+                type="button"
+              >
+                <img
+                  alt=""
+                  className={`movie-poster poster-${movie.posterTheme}`}
+                  src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${movie.posterSrc}`}
+                />
+                {isSelected ? <span className="movie-selected-mark" aria-hidden="true">✓ 선택</span> : null}
+                <span className="movie-meta">
+                  <strong>{movie.title}</strong>
+                  <span>
+                    {movie.ageRating} · {movie.runtimeMinutes}분
+                  </span>
                 </span>
-              </span>
-            </button>
+              </button>
+              <button
+                aria-label={`${movie.title} 영화 정보 · 예고편`}
+                aria-haspopup="dialog"
+                aria-controls={infoMovie?.id === movie.id ? infoDialogId : undefined}
+                className={styles.infoLink}
+                onClick={(event) => {
+                  infoTriggerRef.current = event.currentTarget;
+                  setInfoMovie(movie);
+                }}
+                type="button"
+              >
+                영화 정보 · 예고편 <span aria-hidden="true">↗</span>
+              </button>
+            </div>
           );
         })}
       </div>
@@ -102,6 +126,7 @@ export function MovieScreen({
           극장 선택
         </button>
       </div>
+      {infoMovie ? <MovieInfoDialog id={infoDialogId} movie={infoMovie} onClose={closeMovieInfo} /> : null}
     </section>
   );
 }

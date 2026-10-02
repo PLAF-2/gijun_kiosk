@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { canContinueWithSeats, computeBookingTotal, getOccupiedSeatIds } from "@/lib/cinema/booking";
 import type { Reservation, Screening } from "@/lib/cinema/types";
+import { SeatViewDialog } from "./seat-view-dialog";
+import viewStyles from "./seat-view.module.css";
 
 type SeatScreenProps = {
   screening: Screening;
@@ -22,6 +24,11 @@ function getFitZoom(viewport: HTMLDivElement, mapWidth: number, mapHeight: numbe
 export function SeatScreen(props: SeatScreenProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [lastTouchedSeatId, setLastTouchedSeatId] = useState<string | null>(null);
+  const previewTriggerRef = useRef<HTMLButtonElement>(null);
+  const selectedSeats = props.selectedSeatIds.flatMap((id) => props.screening.seats.filter((seat) => seat.id === id));
+  const previewSeat = selectedSeats.find((seat) => seat.id === lastTouchedSeatId) ?? selectedSeats.at(-1);
   const occupiedSeatIds = getOccupiedSeatIds(props.screening, props.reservations);
   const rows = Array.from(new Set(props.screening.seats.map((seat) => seat.row))).map((row) => [
     row,
@@ -34,6 +41,10 @@ export function SeatScreen(props: SeatScreenProps) {
   const tracks = ["var(--row-label-size)", ...Array.from({ length: columns }, (_, index) => ["var(--seat-size)", ...(aisles.includes(index + 1) ? ["var(--aisle-size)"] : [])]).flat(), "var(--row-label-size)"].join(" ");
   const baseWidth = columns * 50 + aisles.length * 24 + 46;
   const baseHeight = rows.length * 50 - 6;
+
+  useEffect(() => {
+    if (selectedSeats.length === 0) setPreviewOpen(false);
+  }, [selectedSeats.length]);
 
   function fitMap() {
     const viewport = viewportRef.current;
@@ -107,7 +118,7 @@ export function SeatScreen(props: SeatScreenProps) {
                   disabled={occupied}
                   key={seat.id}
                   style={{ gridColumn: (seat.column ?? seat.number) + 1 + aisles.filter((aisle) => aisle < (seat.column ?? seat.number)).length }}
-                  onClick={() => props.onToggleSeat(seat.id)}
+                  onClick={() => { setLastTouchedSeatId(seat.id); props.onToggleSeat(seat.id); }}
                   type="button"
                 ><span>{occupied ? "×" : selected ? "✓" : seat.number}</span></button>
               );
@@ -122,6 +133,11 @@ export function SeatScreen(props: SeatScreenProps) {
       <p>{props.selectedSeatIds.length} / {props.audienceCount}석 선택 · {total.toLocaleString("ko-KR")}원</p>
       <p className="selected-seat-names">{props.selectedSeatIds.length ? props.selectedSeatIds.join(" · ") : "원하는 좌석을 터치해 주세요"}</p>
       </div>
+      <div className={viewStyles.previewBar}>
+        <div><strong>앉기 전에, 내 자리에서 보는 화면</strong><p>{previewSeat ? `${previewSeat.id} 좌석의 스크린 크기와 기울기를 확인해 보세요.` : "좌석을 선택하면 예상 시야를 확인할 수 있어요."}</p></div>
+        <button type="button" disabled={!previewSeat} ref={previewTriggerRef} onClick={() => setPreviewOpen(true)}>내 자리 시야 보기</button>
+      </div>
+      {previewOpen && previewSeat ? <SeatViewDialog screening={props.screening} selectedSeats={selectedSeats} initialSeatId={previewSeat.id} onClose={() => { setPreviewOpen(false); previewTriggerRef.current?.focus({ preventScroll: true }); }} /> : null}
       <p className="pricing-note">CGV 일반 2D 성인 기준 예시 요금이며, 실제 금액은 지점에 따라 다를 수 있습니다.</p>
       {props.bookingError ? <p role="alert">{props.bookingError}</p> : null}
       <div className="screen-actions">

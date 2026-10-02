@@ -4,6 +4,7 @@ import React, { FormEvent, useEffect, useRef, useState } from "react";
 import { findReservation, findReservationsByPhone } from "@/lib/cinema/booking";
 import { isValidPhoneNumber, normalizePhoneNumber } from "@/lib/cinema/contact";
 import { paymentMethodLabel } from "@/lib/cinema/payments";
+import { PriceBreakdownRows } from "@/components/cinema/price-breakdown-rows";
 import type { Reservation } from "@/lib/cinema/types";
 
 type LookupScreenProps = {
@@ -75,6 +76,7 @@ export function LookupResult(props: LookupResultProps) {
         <div><dt>인원</dt><dd>{reservation.audienceCount}명</dd></div>
         <div><dt>좌석</dt><dd>{reservation.seatIds.join(", ")}</dd></div>
         {reservation.paymentMethod ? <div><dt>결제 방식</dt><dd>{paymentMethodLabel(reservation.paymentMethod)}</dd></div> : null}
+        <PriceBreakdownRows breakdown={reservation.priceBreakdown} />
         <div><dt>결제 금액</dt><dd>{reservation.total.toLocaleString("ko-KR")}원</dd></div>
       </dl>
       {cancelled ? <p className="lookup-message">취소된 예매입니다. 취소 후 1분이 지나면 내역이 자동 삭제됩니다.</p> : null}

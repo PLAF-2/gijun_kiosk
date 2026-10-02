@@ -1,6 +1,7 @@
 import type { BookingStore, Reservation } from "@/lib/cinema/types";
 import { isValidPhoneNumber } from "@/lib/cinema/contact";
 import { isPaymentMethod } from "@/lib/cinema/payments";
+import { isBookingPriceBreakdown } from "@/lib/cinema/discounts";
 
 const STORAGE_KEY = "cinema-kiosk-bookings-v1";
 
@@ -37,6 +38,7 @@ function isReservation(value: unknown): value is Reservation {
     typeof value.total === "number" &&
     Number.isFinite(value.total) &&
     value.total >= 0 &&
+    (value.priceBreakdown === undefined || isBookingPriceBreakdown(value.priceBreakdown, value.total)) &&
     (value.status === "booked" || value.status === "cancelled") &&
     typeof value.createdAt === "string" &&
     (value.cancelledAt === undefined || (typeof value.cancelledAt === "string" && Number.isFinite(Date.parse(value.cancelledAt)))) &&

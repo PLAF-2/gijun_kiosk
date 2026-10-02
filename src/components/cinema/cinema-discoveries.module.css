@@ -1,0 +1,159 @@
+.discoveries {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  min-height: 48px;
+  margin: -12px 0 14px;
+  padding: 0 4px;
+  color: #aeb8ca;
+}
+
+.trail,
+.targets,
+.collection {
+  display: flex;
+  align-items: center;
+}
+
+.trail {
+  gap: 12px;
+}
+
+.hint {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.targets {
+  gap: 8px;
+}
+
+.target {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: #abb4cf;
+  transition: color 150ms, border-color 150ms, background-color 150ms;
+}
+
+.target:hover:not(:disabled),
+.target:focus-visible {
+  border-color: #8277ac;
+  background: #252039;
+  color: #ecdcff;
+}
+
+.target[aria-pressed="true"] {
+  border-color: #49445c;
+  background: #1c1a2b;
+  color: #cebef3;
+}
+
+.starSymbol {
+  position: relative;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.starSymbol i {
+  position: absolute;
+  top: -4px;
+  right: -7px;
+  font-style: normal;
+  font-size: 18px;
+  color: #8c839e;
+}
+
+.footprintSymbol {
+  width: 24px;
+  height: 24px;
+  transform: rotate(16deg);
+}
+
+.discoveries[data-scene="starlight"] .star {
+  color: #e1c59a;
+}
+
+.discoveries[data-scene="footprint"] .footprint {
+  color: #b4c9a5;
+}
+
+.check {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #b9a7e8;
+  color: #151125;
+  font-size: 10px;
+}
+
+.collection {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 15px;
+  min-width: 0;
+  font-size: 11px;
+}
+
+.count {
+  white-space: nowrap;
+}
+
+.count strong {
+  margin-left: 5px;
+  color: #ded5f5;
+  font-variant-numeric: tabular-nums;
+}
+
+.count > span {
+  color: #969fb6;
+}
+
+.status {
+  min-height: 20px;
+  line-height: 20px;
+}
+
+.celebration {
+  display: inline-block;
+  color: #d8c9f3;
+  animation: discoveryGlow 650ms ease-out both;
+}
+
+.celebration > span {
+  margin-right: 4px;
+}
+
+@keyframes discoveryGlow {
+  from { opacity: 0; transform: translateY(4px); }
+  45% { text-shadow: 0 0 15px #c1a9ed9c; }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .discoveries { gap: 2px 10px; }
+  .trail { gap: 4px; }
+  .targets { gap: 0; }
+  .collection { gap: 2px 10px; }
+  .status:empty { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .target { transition: none; }
+  .celebration { animation: none; }
+}

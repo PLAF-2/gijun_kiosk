@@ -1,0 +1,87 @@
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  background-color: #080d18;
+  animation: arrive 700ms ease-out both;
+}
+
+.art { width: 100%; height: 100%; display: block; opacity: .7; }
+.mermaid { color: #8eddd2; background-image: radial-gradient(ellipse at 0% 25%, #15465080, transparent 55%), radial-gradient(ellipse at 100% 90%, #335e6240, transparent 50%); }
+.snow { color: #bedbf4; background-image: radial-gradient(ellipse at 5% 100%, #86674335, transparent 45%), radial-gradient(ellipse at 100% 0%, #29497080, transparent 65%); }
+.stars { color: #d6c4f6; background-image: radial-gradient(ellipse at 100% 0%, #4d2e7975, transparent 60%), radial-gradient(ellipse at 0% 90%, #31245880, transparent 55%); }
+.sunset { color: #e1b389; background-image: radial-gradient(ellipse at 95% 15%, #88594345, transparent 65%), radial-gradient(ellipse at 0% 100%, #65414a45, transparent 50%); }
+.ocean { color: #7cd3e3; background-image: radial-gradient(ellipse at 0% 0%, #14516670, transparent 65%), radial-gradient(ellipse at 100% 100%, #13727f40, transparent 60%); }
+.voyage { color: #a5c6d9; background-image: radial-gradient(ellipse at 100% 15%, #35516465, transparent 60%), linear-gradient(180deg, transparent 45%, #16324660); }
+.petals { color: #e6b8dc; background-image: radial-gradient(ellipse at 0% 0%, #6b395b45, transparent 60%), radial-gradient(ellipse at 100% 100%, #42315165, transparent 55%); }
+.garden { color: #c4d599; background-image: radial-gradient(ellipse at 0% 100%, #556c3845, transparent 65%), radial-gradient(ellipse at 100% 20%, #31483d65, transparent 55%); }
+.music { color: #e5c391; background-image: radial-gradient(ellipse at 100% 0%, #68524545, transparent 60%), radial-gradient(ellipse at 0% 100%, #36344770, transparent 60%); }
+.forest { color: #80b496; background-image: radial-gradient(ellipse at 0% 0%, #254e3670, transparent 60%), radial-gradient(ellipse at 100% 100%, #214b4260, transparent 65%); }
+
+.drift { animation: drift 20s ease-in-out infinite alternate; }
+.float { animation: float 18s ease-in-out infinite alternate; }
+.waves { animation: tide 24s ease-in-out infinite alternate; }
+.leaves { animation: sway 26s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+.snowfall { animation: snowfall 22s ease-in-out infinite alternate; }
+.petalMotion { animation: petalDrift 26s ease-in-out infinite alternate; }
+
+/* This class belongs on the shell; the backdrop is its sibling at z-index 0. */
+.themedShell { position: relative; z-index: 1; }
+.themedShell :global(.screen-card) {
+  background: linear-gradient(125deg, var(--movie-glow, transparent), transparent 48%), var(--panel);
+  box-shadow: 0 20px 70px #00000026;
+}
+.themedShell :global(.cinema-header) {
+  box-shadow: 0 1px 0 var(--movie-glow, transparent);
+}
+.themedShell :global(.primary-button) { box-shadow: 0 5px 24px var(--movie-glow, #8b7cff14); }
+.themedShell :global(.primary-button:hover:not(:disabled)) { background: var(--accent-light); border-color: var(--accent-light); }
+.themedShell :global(.primary-button:disabled) { box-shadow: none; }
+.themedShell :global(.secondary-button:not(:disabled)),
+.themedShell :global(.audience-bar),
+.themedShell :global(.screen-card > .booking-summary),
+.themedShell :global(.payment-total),
+.themedShell :global(.discount-panel),
+.themedShell :global(.discount-picker) { background: var(--panel-raised); }
+.themedShell :global(.secondary-button:hover:not(:disabled)) { border-color: var(--accent-light); }
+.themedShell :global(.booking-summary > div + div) { border-color: var(--line); }
+.themedShell :global(.discount-categories button.is-active),
+.themedShell :global(.discount-choice button.is-selected),
+.themedShell :global(.benefit-option.is-applied) {
+  background: var(--movie-selected);
+  border-color: var(--accent);
+}
+.themedShell :global(.payment-reader) { background: radial-gradient(ellipse, var(--movie-glow), transparent 70%); }
+.themedShell :global(.movie-card.is-selected),
+.themedShell :global(.showtime-grid button[aria-pressed="true"]),
+.themedShell :global(.region-options button[aria-pressed="true"]),
+.themedShell :global(.theater-options button[aria-pressed="true"]),
+.themedShell :global(.lookup-mode button[aria-pressed="true"]),
+.themedShell :global(.lookup-matches button[aria-pressed="true"]) {
+  background: var(--movie-selected, #292345);
+  border-color: var(--accent);
+}
+.themedShell :global(.movie-card.is-selected) { box-shadow: 0 0 0 2px var(--movie-glow, #8b7cff45); }
+.themedShell :global(.movie-card:hover:not(:disabled)) { border-color: var(--accent-light); background: var(--panel-raised); }
+.themedShell :global(.seat-selection-summary) { background: var(--panel-raised); }
+.themedShell :global(.seat.seat-selected:not(:disabled)) { border-color: var(--accent-light); }
+
+@keyframes arrive { from { opacity: 0; } to { opacity: 1; } }
+@keyframes drift { from { transform: translateY(0); } to { transform: translateY(-7px); } }
+@keyframes float { from { transform: translateY(7px); } to { transform: translateY(-10px); } }
+@keyframes tide { from { transform: translateX(-20px) translateY(3px); } to { transform: translateX(20px) translateY(-6px); } }
+@keyframes sway { from { transform: rotate(-.4deg); } to { transform: rotate(.4deg); } }
+@keyframes snowfall { from { transform: translateY(-16px); } to { transform: translateY(18px); } }
+@keyframes petalDrift { from { transform: translateY(-7px) translateX(-3px); } to { transform: translateY(9px) translateX(5px); } }
+
+@media (max-width: 700px) {
+  .art { opacity: .46; }
+  .compass { opacity: .2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atmosphere, .atmosphere * { animation: none; }
+}
