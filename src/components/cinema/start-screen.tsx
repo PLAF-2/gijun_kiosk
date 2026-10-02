@@ -43,7 +43,6 @@ export function StartScreen({ onStartBooking, onLookupBooking }: StartScreenProp
           <span className={`${styles.door} ${styles.rightDoor}`}><i/><span className={styles.wordmarkStrip}><span className={styles.doorTitle}>{Array.from("CINEMA").map((letter, index) => <span key={index}>{letter}</span>)}</span></span></span>
           <span className={styles.seam}/>
         </span>
-        <span className={styles.invitation} aria-hidden="true">{opening ? "당신의 영화가 시작됩니다" : "문을 터치해 입장하세요"} <span>↗</span></span>
       </button>
       <div className={styles.support}>
         <div><h1>오늘의 영화를 예매하세요</h1><p>기다려 온 이야기, 가장 좋은 자리에서.</p></div>

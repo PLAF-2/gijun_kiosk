@@ -6,7 +6,7 @@
 .portal:active:not(:disabled) { transform: none; }
 .marquee { display: block; padding: 15px 16px; border: 1px solid #88784b; border-radius: 16px 16px 0 0; background: #171420; box-shadow: inset 0 0 0 5px #171420, inset 0 0 0 6px #8d704144; color: #e4c992; font-size: clamp(10px, 1vw, 14px); font-weight: 700; letter-spacing: .22em; }
 .marquee small { display: block; margin-top: 5px; color: #bba784; font-size: 8px; letter-spacing: .22em; font-weight: 400; }
-.doorFrame { position: relative; display: block; height: clamp(330px, 52svh, 640px); overflow: hidden; border: 7px solid #302633; border-top: none; border-radius: 0 0 12px 12px; background: #100d1b; perspective: 1200px; box-shadow: 0 20px 50px #0008; }
+.doorFrame { position: relative; display: block; height: clamp(386px, calc(52svh + 56px), 696px); overflow: hidden; border: 7px solid #302633; border-top: none; border-radius: 0 0 12px 12px; background: #100d1b; perspective: 1200px; box-shadow: 0 20px 50px #0008; }
 .inside { position: absolute; display: flex; align-items: center; justify-content: center; gap: clamp(8px, 3vw, 36px); inset: 0; padding: 28px; background: radial-gradient(ellipse, #8673bf55, #0d1020 75%); }
 .inside img { width: 27%; max-width: 240px; max-height: 85%; aspect-ratio: 2 / 3; object-fit: contain; border-radius: 6px; box-shadow: 0 12px 24px #0008; }
 .inside img:nth-child(1) { transform: rotate(-8deg) translateY(15px); }
@@ -17,12 +17,12 @@
 .leftDoor { left: 0; transform-origin: left center; }
 .rightDoor { right: 0; transform-origin: right center; }
 /* Both leaves clip the same six-column word. The seam is exactly between N and E. */
-.wordmarkStrip { position: absolute; top: 50%; width: 200%; display: grid; place-items: center; transform: translateY(-50%); }
+.wordmarkStrip { position: absolute; top: 30%; width: 200%; display: grid; place-items: center; transform: translateY(-50%); }
 .leftDoor .wordmarkStrip { left: 0; }
 .rightDoor .wordmarkStrip { left: -100%; }
 .doorTitle { display: grid; grid-template-columns: repeat(6, 1.15em); font-family: Georgia, serif; font-size: clamp(28px, 6vw, 86px); line-height: 1; font-weight: 500; color: #e6c996; text-shadow: 0 2px 16px #10081299; }
 .doorTitle > span { text-align: center; }
-.door i { position: absolute; top: 66%; width: 8px; height: clamp(40px, 7svh, 66px); border: 1px solid #ead093; border-radius: 10px; background: linear-gradient(90deg, #947144, #ead5a0, #947144); box-shadow: 0 3px 7px #0008; }
+.door i { position: absolute; top: 50%; transform: translateY(-50%); width: 8px; height: clamp(40px, 7svh, 66px); border: 1px solid #ead093; border-radius: 10px; background: linear-gradient(90deg, #947144, #ead5a0, #947144); box-shadow: 0 3px 7px #0008; }
 .leftDoor i { right: 18px; }
 .rightDoor i { left: 18px; }
 .seam { position: absolute; inset-block: 0; left: calc(50% - 1px); width: 2px; background: #dfd0b05e; box-shadow: 0 0 16px #dfd0b04a; transition: opacity 250ms; }
@@ -30,8 +30,6 @@
 .opening .leftDoor { transform: rotateY(-100deg); filter: brightness(.6); }
 .opening .rightDoor { transform: rotateY(100deg); filter: brightness(.6); }
 .opening .seam { opacity: 0; }
-.invitation { display: block; margin-top: 18px; color: #c8bcdb; font-size: 14px; font-weight: 400; }
-.invitation > span { margin-left: 8px; color: #e4c992; }
 .support { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; width: 100%; max-width: 1160px; padding-top: 22px; border-top: 1px solid #ffffff16; }
 .support h1 { margin: 0 0 6px; font-size: clamp(19px, 2vw, 26px); }
 .support p { margin: 0; color: var(--muted); font-size: 13px; }
@@ -39,5 +37,5 @@
 .lookup, .skip { min-height: 48px; padding: 10px 18px; border-color: #4e435d; background: #1d1b2b; color: #dcd5e8; font-size: 14px; }
 .skip { background: transparent; }
 .status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (max-width: 600px) { .entry { padding: 18px 14px 24px; gap: 22px; } .doorFrame { height: clamp(300px, 49svh, 480px); border-width: 5px; } .support { flex-direction: column; text-align: center; gap: 16px; padding-top: 18px; } .supportActions { justify-content: center; } .marquee { letter-spacing: .12em; padding: 13px 8px; } .invitation { font-size: 12px; } .leftDoor i { right: 12px; } .rightDoor i { left: 12px; } }
+@media (max-width: 600px) { .entry { padding: 18px 14px 24px; gap: 22px; } .doorFrame { height: clamp(350px, calc(49svh + 50px), 530px); border-width: 5px; } .support { flex-direction: column; text-align: center; gap: 16px; padding-top: 18px; } .supportActions { justify-content: center; } .marquee { letter-spacing: .12em; padding: 13px 8px; } .leftDoor i { right: 12px; } .rightDoor i { left: 12px; } }
 @media (prefers-reduced-motion: reduce) { .door, .seam { transition: none; } }
